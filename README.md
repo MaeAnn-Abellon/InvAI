@@ -22,7 +22,7 @@ SmartStock is a web-based inventory management system designed for **Consolatrix
 ## 🏗 **Installation & Setup**  
 ### **1️⃣ Clone the Repository**  
 _[In Terminal]_
--> git clone https://github.com/yourusername/smartstock.git
+-> git clone https://github.com/MaeAnn-Abellon/SmartStock
 -> cd smartstock
 
 ### **2️⃣ Install Dependencies**  
