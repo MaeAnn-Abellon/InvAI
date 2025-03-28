@@ -21,17 +21,17 @@ SmartStock is a web-based inventory management system designed for **Consolatrix
 
 ## 🏗 **Installation & Setup**  
 ### **1️⃣ Clone the Repository**  
-_[In Terminal]_
--> git clone https://github.com/MaeAnn-Abellon/SmartStock
--> cd smartstock
+- _[In Terminal]_
+- -> git clone https://github.com/MaeAnn-Abellon/SmartStock
+- -> cd smartstock
 
 ### **2️⃣ Install Dependencies**  
-_[In Terminal]_
--> npm install
+- _[In Terminal]_
+- -> npm install
 
 ### **3️⃣ Run the Development Server** 
-_[In Terminal]_
--> npm run dev
+- _[In Terminal]_
+- -> npm run dev
 
 **The website will be available on an available localhost.**
 
@@ -44,11 +44,11 @@ Before running the project, make sure you have these installed:
 
 #### **🔹 Required Packages**  
 These dependencies are automatically installed with `npm install`, but if you run into issues, install them manually:  
-🔸**npm install vite@latest**
-🔸**npm install react-router-dom**
-🔸**npm install @mui/icons-material**
-🔸**npm install @mui/material @emotion/react @emotion/styled**
-🔸**npm install lucide-react**
+- 🔸**npm install vite@latest**
+- 🔸**npm install react-router-dom**
+- 🔸**npm install @mui/icons-material**
+- 🔸**npm install @mui/material @emotion/react @emotion/styled**
+- 🔸**npm install lucide-react**
 
 
 ## 🎯 **Usage Guide**  
