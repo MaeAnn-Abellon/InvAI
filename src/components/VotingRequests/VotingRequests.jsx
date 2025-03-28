@@ -5,6 +5,7 @@ import { Bell, Settings as SettingsIcon } from 'lucide-react';
 import { useState } from 'react';
 import SettingsModal from '../SettingsModal';
 import RequestModal from '../Requests/RequestModal';
+import { MessageCircle } from 'lucide-react';
 
 const PageContainer = styled.div`
   display: flex;
@@ -226,6 +227,62 @@ const RequestCard = styled.div`
   }
 `;
 
+const ChatbotContainer = styled.div`
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+`;
+
+const ChatbotButton = styled.button`
+  background: #4834d4;
+  color: white;
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background 0.3s;
+
+  &:hover {
+    background: #372aaa;
+  }
+`;
+
+const ChatWindow = styled.div`
+  background: white;
+  width: 300px;
+  height: 400px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  display: ${(props) => (props.open ? 'block' : 'none')};
+`;
+
+const ChatHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  margin-bottom: 10px;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+`;
+
 const VotingRequests = () => {
   const officeSupplies = [
     { id: 1, name: 'Whiteboard Markers (Assorted Colors)', votes: 98 },
@@ -249,7 +306,7 @@ const VotingRequests = () => {
   ];
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-
+  const [chatOpen, setChatOpen] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
 
   return (
@@ -311,6 +368,21 @@ const VotingRequests = () => {
           </RequestsSection>
         </ContentGrid>
       </MainContent>
+      <ChatbotContainer>
+        {chatOpen && (
+          <ChatWindow open={chatOpen}>
+            <ChatHeader>
+              <span>AI Chatbot</span>
+              <CloseButton onClick={() => setChatOpen(false)}>✖</CloseButton>
+            </ChatHeader>
+            <p>👋 Hello! How can I help you today?</p>
+            {/* Chat UI can go here */}
+          </ChatWindow>
+        )}
+        <ChatbotButton onClick={() => setChatOpen(!chatOpen)}>
+          <MessageCircle size={24} />
+        </ChatbotButton>
+      </ChatbotContainer>
     </PageContainer>
   );
 };

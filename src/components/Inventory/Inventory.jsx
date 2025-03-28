@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import Sidebar from '../Dashboard/Sidebar';
 import { Bell, Settings as SettingsIcon } from 'lucide-react';
 import SettingsModal from '../SettingsModal';
+import { MessageCircle } from 'lucide-react';
 
 const PageContainer = styled.div`
   display: flex;
@@ -149,9 +150,66 @@ const LastUpdated = styled.span`
   font-size: 0.9rem;
 `;
 
+const ChatbotContainer = styled.div`
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+`;
+
+const ChatbotButton = styled.button`
+  background: #4834d4;
+  color: white;
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background 0.3s;
+
+  &:hover {
+    background: #372aaa;
+  }
+`;
+
+const ChatWindow = styled.div`
+  background: white;
+  width: 300px;
+  height: 400px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  display: ${(props) => (props.open ? 'block' : 'none')};
+`;
+
+const ChatHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  margin-bottom: 10px;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+`;
+
 const Inventory = () => {
   const [activeTab, setActiveTab] = useState('List');
   const [openSettings, setOpenSettings] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const supplies = [
     {
@@ -210,7 +268,7 @@ const Inventory = () => {
     },
   ];
 
-  const tabs = ['List', 'Recently Added', 'Most Needed', 'Lowest Stock'];
+  const tabs = ['List', 'Recently Added', 'Upcoming', 'AI Predictions'];
 
   return (
     <PageContainer>
@@ -275,6 +333,21 @@ const Inventory = () => {
         {/* SETTINGS MODAL */}
         <SettingsModal open={openSettings} onClose={() => setOpenSettings(false)} />
       </MainContent>
+      <ChatbotContainer>
+        {chatOpen && (
+          <ChatWindow open={chatOpen}>
+            <ChatHeader>
+              <span>AI Chatbot</span>
+              <CloseButton onClick={() => setChatOpen(false)}>✖</CloseButton>
+            </ChatHeader>
+            <p>👋 Hello! How can I help you today?</p>
+            {/* Chat UI can go here */}
+          </ChatWindow>
+        )}
+        <ChatbotButton onClick={() => setChatOpen(!chatOpen)}>
+          <MessageCircle size={24} />
+        </ChatbotButton>
+      </ChatbotContainer>
     </PageContainer>
   );
 };

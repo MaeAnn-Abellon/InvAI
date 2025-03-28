@@ -6,6 +6,7 @@ import sLogo from '../../assets/sLogo.png';
 import stock from '../../assets/stock.gif';
 import { Bell, Settings as SettingsIcon } from 'lucide-react';
 import SettingsModal from '../SettingsModal';
+import { MessageCircle } from 'lucide-react';
 
 // Styled components (no changes here — keeping your styles as-is)
 const DashboardContainer = styled.div`
@@ -196,6 +197,22 @@ const InventoryItem = styled.div`
   }
 `;
 
+const AIButton = styled(Link)`
+  background: #22c55e;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 1rem;
+  text-align: center;
+
+  &:hover {
+    background: #16a34a;
+  }
+`;
+
 const AnnouncementsSection = styled.div`
   background: white;
   padding: 1.5rem;
@@ -237,6 +254,97 @@ const StatusLabel = styled.div`
   gap: 0.25rem;
 `;
 
+const ChatbotContainer = styled.div`
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+`;
+
+const ChatbotButton = styled.button`
+  background: #4834d4;
+  color: white;
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background 0.3s;
+
+  &:hover {
+    background: #372aaa;
+  }
+`;
+
+const ChatWindow = styled.div`
+  background: white;
+  width: 300px;
+  height: 400px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  display: ${(props) => (props.open ? 'block' : 'none')};
+`;
+
+const ChatHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  margin-bottom: 10px;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+`;
+
+const CloseModalButton = styled.button`
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 1rem;
+
+  &:hover {
+    background: #d43838;
+  }
+`;
+
 const notifications = [
   { message: '📢 Inventory Audit Schedule!', status: 'unread' },
   { message: '🆕 New Voting Round Open!', status: 'unread' },
@@ -247,6 +355,14 @@ const notifications = [
 
 const Dashboard = () => {
   const [openSettings, setOpenSettings] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false); 
+  const aiPredictions = [
+    { name: 'Bond Papers', percentage: 85 },
+    { name: 'Printer Ink', percentage: 70 },
+    { name: 'Markers', percentage: 65 },
+  ];
+
 
   return (
     <DashboardContainer>
@@ -345,6 +461,7 @@ const Dashboard = () => {
                   </div>
                 </InventoryItem>
               </InventoryList>
+              <AIButton onClick={() => setShowAIModal(true)}>View Predictions</AIButton>
             </StatsCard>
           </StatsGrid>
 
@@ -364,7 +481,42 @@ const Dashboard = () => {
           </AnnouncementsSection>
         </Content>
       </MainContent>
+
+      {showAIModal && (
+        <ModalOverlay>
+          <ModalContent>
+            <h2>📊 AI Predictions</h2>
+            <p>These supplies are likely to run out next week:</p>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              {aiPredictions.map((item, index) => (
+                <li key={index} style={{ fontSize: '1.1rem', margin: '0.5rem 0' }}>
+                  {index + 1}. {item.name} - <strong>{item.percentage}%</strong>
+                </li>
+              ))}
+            </ul>
+            <CloseModalButton onClick={() => setShowAIModal(false)}>Close</CloseModalButton>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+
+
+      <ChatbotContainer>
+        {chatOpen && (
+          <ChatWindow open={chatOpen}>
+            <ChatHeader>
+              <span>AI Chatbot</span>
+              <CloseButton onClick={() => setChatOpen(false)}>✖</CloseButton>
+            </ChatHeader>
+            <p>👋 Hello! How can I help you today?</p>
+            {/* Chat UI can go here */}
+          </ChatWindow>
+        )}
+        <ChatbotButton onClick={() => setChatOpen(!chatOpen)}>
+          <MessageCircle size={24} />
+        </ChatbotButton>
+      </ChatbotContainer>
     </DashboardContainer>
+    
   );
 };
 
