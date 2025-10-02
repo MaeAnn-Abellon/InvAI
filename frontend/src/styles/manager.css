@@ -1,0 +1,6 @@
+.manager-dashboard .overview-cards { display: flex; gap: 1rem; }
+.overview-cards .card { background:#f4f6fa; padding:1rem; border-radius:6px; display:flex; flex-direction:column; }
+.requests-list .request-item { border:1px solid #ddd; padding:1rem; margin-bottom:.75rem; border-radius:6px; display:flex; justify-content:space-between; }
+.voting-trend { margin-top:.5rem; }
+.forecast-card { border:1px solid #ddd; padding:.75rem; border-radius:6px; width:150px; }
+.graphs { display:flex; gap:1rem; flex-wrap:wrap; }

@@ -1,0 +1,100 @@
+/* General background and font */
+body, .admin-dashboard-bg {
+  background: #f1f5f9;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+/* Card style for sections */
+.admin-card {
+  background: #fff;
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 24px 0 rgba(30, 64, 175, 0.07);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  transition: box-shadow 0.2s;
+}
+
+.admin-card:hover {
+  box-shadow: 0 8px 32px 0 rgba(30, 64, 175, 0.13);
+}
+
+/* Header bar */
+.admin-header {
+  background: #fff;
+  box-shadow: 0 2px 8px 0 rgba(30, 64, 175, 0.05);
+  border-bottom: 2px solid #e0e7ef;
+}
+
+.admin-header-title {
+  color: #3730a3;
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+}
+
+.admin-header-logo {
+  height: 44px;
+  margin-right: 0.75rem;
+}
+
+/* Buttons */
+.admin-btn {
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px 0 rgba(30, 64, 175, 0.04);
+}
+
+.admin-btn-indigo {
+  background: #6366f1;
+  color: #fff;
+}
+
+.admin-btn-indigo:hover {
+  background: #4338ca;
+}
+
+.admin-btn-gray {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.admin-btn-gray:hover {
+  background: #e5e7eb;
+}
+
+/* Section titles */
+.admin-section-title {
+  color: #3730a3;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+/* Table styling */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.admin-table th, .admin-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-table th {
+  background: #f3f4f6;
+  color: #6366f1;
+  font-weight: 600;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .admin-card {
+    padding: 1rem;
+  }
+  .admin-header-title {
+    font-size: 1rem;
+  }
+}
