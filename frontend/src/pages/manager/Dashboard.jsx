@@ -7,6 +7,9 @@ export default function Dashboard() {
   // Removed forecastHighlights & notifications (unused mock content)
   const [analytics, setAnalytics] = useState({ items:[], claims:[], returns:{ pending_returns:0 }});
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [forecastLoading, setForecastLoading] = useState(false);
+  const [forecastError, setForecastError] = useState(null);
+  const [depletionAlerts, setDepletionAlerts] = useState([]); // derived from forecast endpoint
   const navigate = useNavigate();
 
   // Removed mock dashboard fetch (no longer needed)
@@ -19,6 +22,36 @@ export default function Dashboard() {
         setAnalytics(data);
       } catch(e){ console.error('analytics error', e); }
       finally { setAnalyticsLoading(false); }
+    })();
+  }, []);
+
+  // Fetch AI depletion forecast (lightweight subset for dashboard)
+  useEffect(()=>{
+    (async () => {
+      setForecastLoading(true); setForecastError(null);
+      try {
+        const res = await inventoryApi.forecastDepletion({ windowDays:30, limit:30 });
+        const list = (res.forecasts||[]) // pick items that are out_of_stock OR <=14 days
+          .filter(it => it.status === 'out_of_stock' || (it.daysToDeplete !== null && it.daysToDeplete <= 14))
+          .map(it => ({
+            id: it.id,
+            name: it.name,
+            quantity: it.quantity,
+            status: it.status,
+            daysToDeplete: it.daysToDeplete,
+            projectedDate: it.projectedDepletionDate,
+            avgDailyUsage: it.avgDailyUsage
+          }))
+          .sort((a,b)=>{
+            const da = a.daysToDeplete ?? 9999;
+            const db = b.daysToDeplete ?? 9999;
+            return da - db;
+          })
+          .slice(0,10);
+        setDepletionAlerts(list);
+      } catch(e){
+        setForecastError(e.message);
+      } finally { setForecastLoading(false); }
     })();
   }, []);
 
@@ -35,6 +68,14 @@ export default function Dashboard() {
           <QuickBtn onClick={()=>navigate('/reports')}>Reports</QuickBtn>
         </div>
       </div>
+
+      {/* AI Forecast Alerts (notification style) */}
+      <DepletionAlerts
+        loading={forecastLoading}
+        error={forecastError}
+        alerts={depletionAlerts}
+        onViewAll={()=>navigate('/manager/forecasts')}
+      />
 
   {/* Separate status sections replacing previous combined AnalyticsBar */}
   <StatusSections analytics={analytics} loading={analyticsLoading} />
@@ -416,4 +457,84 @@ function returnBreakdownPie(returns={}) {
 
 function groupBy(arr, fn) {
   return arr.reduce((acc,x)=>{ const k = fn(x); (acc[k] ||= []).push(x); return acc; }, {});
+}
+
+// ============ AI Forecast Alerts Component ============
+function DepletionAlerts({ loading, error, alerts, onViewAll }) {
+  return (
+    <div style={{
+      marginBottom:'1.4rem',
+      background:'#fff',
+      border:'1px solid #e2e8f0',
+      borderRadius:18,
+      padding:'.85rem .95rem .95rem',
+      boxShadow:'0 4px 14px -6px rgba(0,0,0,.05)',
+      display:'flex', flexDirection:'column', gap:'.65rem'
+    }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'.75rem' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'.55rem' }}>
+          <span style={{ width:10, height:10, background:'#6366f1', borderRadius:3, boxShadow:'0 0 0 4px #6366f11f' }} />
+          <strong style={{ fontSize:'.75rem', letterSpacing:.3 }}>AI Depletion Alerts</strong>
+          <span style={{ fontSize:'.45rem', background:'#eef2ff', color:'#4338ca', padding:'.25rem .5rem', fontWeight:600, borderRadius:999 }}>beta</span>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:'.55rem' }}>
+          <small style={{ fontSize:'.5rem', color:'#64748b' }}>Window 30d • Threshold ≤14d</small>
+          <button onClick={onViewAll} style={{ background:'#4338ca', color:'#fff', border:'none', fontSize:'.5rem', fontWeight:600, padding:'.4rem .55rem', borderRadius:8, cursor:'pointer' }}>View All</button>
+        </div>
+      </div>
+      {loading && <div style={{ fontSize:'.55rem', color:'#64748b' }}>Analyzing recent usage...</div>}
+      {!loading && error && <div style={{ fontSize:'.55rem', color:'#dc2626' }}>Error: {error}</div>}
+      {!loading && !error && (
+        <ul style={{ listStyle:'none', margin:0, padding:0, display:'flex', flexDirection:'column', gap:'.45rem', maxHeight:190, overflowY:'auto' }}>
+          {alerts.map(a => (
+            <li key={a.id} style={{
+              background:'#f8fafc',
+              border:'1px solid #e2e8f0',
+              padding:'.55rem .6rem',
+              borderRadius:12,
+              display:'flex',
+              flexDirection:'column',
+              gap:'.35rem',
+              fontSize:'.55rem',
+              fontWeight:500,
+              position:'relative'
+            }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'.6rem' }}>
+                <span style={{ fontWeight:600 }}>{a.name}</span>
+                <div style={{ display:'flex', alignItems:'center', gap:'.4rem' }}>
+                  {a.status === 'out_of_stock' && <Badge bg="#fee2e2" color="#b91c1c">OUT</Badge>}
+                  {a.status !== 'out_of_stock' && a.daysToDeplete != null && (
+                    <Badge bg={a.daysToDeplete <= 7 ? '#fee2e2':'#fef9c3'} color={a.daysToDeplete <= 7 ? '#b91c1c':'#92400e'}>
+                      ~{Math.max(0, Math.round(a.daysToDeplete))}d
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:'.5rem' }}>
+                <UsageBar days={a.daysToDeplete} />
+                <span style={{ fontSize:'.5rem', opacity:.65 }}>
+                  {a.status === 'out_of_stock' ? 'Restock immediately' : a.daysToDeplete != null ? 'Est. depletion' : 'Insufficient data'}
+                </span>
+              </div>
+            </li>
+          ))}
+          {!alerts.length && <li style={{ fontSize:'.55rem', color:'#64748b', padding:'.4rem .2rem' }}>No urgent depletion risks.</li>}
+        </ul>
+      )}
+      <small style={{ fontSize:'.45rem', color:'#64748b' }}>Predictions based on recent approved claims · heuristic model</small>
+    </div>
+  );
+}
+
+function UsageBar({ days }) {
+  if (days == null) return <div style={{ flex:1, height:6, background:'#e2e8f0', borderRadius:4 }} />;
+  const threshold = 14; // days window considered urgent
+  const clamped = Math.min(threshold, Math.max(0, days));
+  const pct = 100 - (clamped/threshold)*100; // fuller bar = sooner depletion
+  const color = days <= 7 ? '#dc2626' : '#f59e0b';
+  return (
+    <div style={{ position:'relative', flex:1, height:6, background:'#f1f5f9', borderRadius:4, overflow:'hidden' }} aria-label={`${Math.round(days)} days to deplete`}>
+      <div style={{ position:'absolute', inset:0, width:`${pct}%`, background:color, transition:'width .6s cubic-bezier(.4,0,.2,1)' }} />
+    </div>
+  );
 }

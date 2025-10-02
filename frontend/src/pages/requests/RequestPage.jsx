@@ -1,13 +1,10 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import styled from '@emotion/styled';
+import { PageSurface, GradientHeading, GlassPanel, PrimaryButton, SubNote, Divider as GDivider } from '@/components/ui/Glass';
 import { useAuth } from '@/context/useAuth';
 
 /* ====== Layout / Main Page ====== */
-const Page = styled.div`
-  padding: 2rem 2.25rem 3rem;
-  background: #f8fafc;
-  width: 100%;
-`;
+const Page = styled(PageSurface)`padding:2rem 2.25rem 3rem; width:100%;`;
 
 const Header = styled.div`
   display:flex;
@@ -16,7 +13,7 @@ const Header = styled.div`
   flex-wrap:wrap;
   gap:1rem;
   margin-bottom:1.25rem;
-  h1 { margin:0; font-size:1.7rem; }
+  h1 { margin:0; font-size:1.8rem; }
 `;
 
 const HistoryBtn = styled.button`
@@ -45,16 +42,8 @@ const Notice = styled.div`
   strong { font-weight:600; }
 `;
 
-const FormCard = styled.form`
-  background:#fff;
-  border:1px solid #e2e8f0;
-  border-radius:18px;
-  padding:1.6rem 1.6rem 2rem;
-  display:flex;
-  flex-direction:column;
-  gap:1rem;
-  box-shadow:0 4px 12px rgba(0,0,0,0.04);
-  max-width: 1000px;
+const FormCard = styled(GlassPanel).withComponent('form')`
+  max-width:1000px; gap:1.05rem; padding:1.6rem 1.6rem 2rem; border-radius:26px;
 `;
 
 const Field = styled.div`
@@ -81,20 +70,7 @@ const Field = styled.div`
   textarea { min-height:110px; }
 `;
 
-const SubmitBtn = styled.button`
-  align-self:flex-start;
-  background:#4834d4;
-  color:#fff;
-  border:none;
-  padding:.75rem 1.35rem;
-  font-size:.75rem;
-  border-radius:12px;
-  font-weight:600;
-  cursor:pointer;
-  margin-top:.3rem;
-  &:hover{ background:#372aaa; }
-  &:disabled{ background:#cbd5e1; cursor:default; }
-`;
+const SubmitBtn = styled(PrimaryButton)`margin-top:.3rem; font-size:.68rem; padding:.7rem 1.25rem;`;
 
 /* ====== History Modal ====== */
 const Backdrop = styled.div`
@@ -109,22 +85,10 @@ const Backdrop = styled.div`
   z-index:500;
 `;
 
-const Modal = styled.div`
-  background:#ffffff;
-  width:100%;
-  max-width:940px;
-  border-radius:24px;
-  padding:1.6rem 1.8rem 2rem;
-  display:flex;
-  flex-direction:column;
-  gap:1.4rem;
-  position:relative;
-  box-shadow:0 8px 28px -4px rgba(0,0,0,0.25), 0 0 0 1px #e2e8f0;
+const Modal = styled(GlassPanel)`
+  width:100%; max-width:940px; border-radius:32px; padding:1.6rem 1.8rem 2rem; gap:1.4rem;
   animation:pop .35s cubic-bezier(.4,0,.2,1);
-  @keyframes pop {
-    0% { transform:translateY(12px) scale(.98); opacity:0; }
-    100% { transform:translateY(0) scale(1); opacity:1; }
-  }
+  @keyframes pop {0%{transform:translateY(12px) scale(.98); opacity:0;}100%{transform:translateY(0) scale(1); opacity:1;}}
 `;
 
 const ModalHeader = styled.div`
@@ -265,16 +229,17 @@ const StatsSummary = styled.div`
 `;
 
 const List = styled.div`
-  border:1px solid #e2e8f0;
-  border-radius:16px;
+  border:1px solid rgba(255,255,255,.55);
+  border-radius:20px;
   overflow:hidden;
-  background:#fff;
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(10px) saturate(160%);
 `;
 
 const ListHead = styled.div`
   display:grid;
   grid-template-columns: 28% 18% 18% 1fr 14%;
-  background:#f1f5f9;
+  background:linear-gradient(135deg,#f1f5f9,#e2e8f0);
   padding:.65rem .85rem;
   font-size:.6rem;
   font-weight:600;
@@ -289,11 +254,9 @@ const Row = styled.div`
   padding:.65rem .85rem;
   font-size:.7rem;
   border-top:1px solid #e2e8f0;
-  background:#fff;
+  background:rgba(255,255,255,.55);
   align-items:start;
-  &:nth-of-type(odd){
-    background:#fcfdff;
-  }
+  &:nth-of-type(odd){ background:rgba(255,255,255,.75); }
 `;
 
 const StatusBadge = styled.span`
@@ -395,7 +358,7 @@ const RequestPage = () => {
   return (
     <Page>
       <Header>
-        <h1>Submit Supply Request</h1>
+        <GradientHeading as="h1">Submit Supply Request</GradientHeading>
         <HistoryBtn type="button" onClick={()=>setShowHistoryModal(true)}>
           📜 Request History
         </HistoryBtn>

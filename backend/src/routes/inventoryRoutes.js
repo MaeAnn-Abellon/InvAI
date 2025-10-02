@@ -152,6 +152,29 @@ router.post('/claims/:claimId/decision', managerOrAdmin, async (req,res) => {
   }
 });
 
+// Delete (withdraw) a pending claim. Allowed if:
+//  - requester themselves, OR
+//  - manager/admin (any pending claim)
+// Restrictions:
+//  - Only status 'pending' deletable (approved claims are historical records tying to inventory changes)
+router.delete('/claims/:claimId', async (req,res) => {
+  try {
+    const claimId = req.params.claimId;
+    const { rows } = await pool.query('SELECT * FROM inventory_claims WHERE id=$1', [claimId]);
+    const claim = rows[0];
+    if (!claim) return res.status(404).json({ error:'Not found' });
+    if (claim.status !== 'pending') return res.status(409).json({ error:'Already decided' });
+    const isOwner = claim.requested_by === req.user.id;
+    const elevated = ['manager','admin'].includes(req.user.role);
+    if (!isOwner && !elevated) return res.status(403).json({ error:'Forbidden' });
+    await pool.query('DELETE FROM inventory_claims WHERE id=$1', [claimId]);
+    return res.status(204).end();
+  } catch(e){
+    console.error('[claim-delete-error]', e);
+    res.status(400).json({ error: e.message || 'Delete failed' });
+  }
+});
+
 // =====================
 // Item Requests & Voting
 // =====================

@@ -3,10 +3,22 @@ import styled from '@emotion/styled';
 import { useAuth } from '@/context/useAuth';
 import { inventoryApi } from '@/services/inventoryApi';
 
-/* Layout */
+/* Layout - themed to match auth pages (gradient + glass) */
 const Wrapper = styled.div`
-  position: relative;
-  padding-bottom: 6rem;
+  position:relative;
+  padding:2rem;
+  min-height:100vh;
+  padding-top:1.6rem;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(99,102,241,.18), transparent 60%),
+    radial-gradient(circle at 88% 72%, rgba(72,52,212,.20), transparent 55%),
+    linear-gradient(135deg,#eef2f7,#f1f5f9);
+  overflow:hidden;
+  &:before, &:after { content:''; position:absolute; width:560px; height:560px; border-radius:50%; filter:blur(70px); opacity:.35; z-index:0; mix-blend-mode:soft-light; }
+  &:before { top:-180px; left:-200px; background:radial-gradient(circle,#6366f1,#4834d4 60%); animation:floatA 18s linear infinite; }
+  &:after { bottom:-200px; right:-220px; background:radial-gradient(circle,#6366f1,#312e81 60%); animation:floatB 22s linear infinite; }
+  @keyframes floatA { 0%{ transform:translateY(0) rotate(0deg);} 50%{ transform:translateY(-40px) rotate(140deg);} 100%{ transform:translateY(0) rotate(360deg);} }
+  @keyframes floatB { 0%{ transform:translateY(0) rotate(0deg);} 50%{ transform:translateY(50px) rotate(220deg);} 100%{ transform:translateY(0) rotate(360deg);} }
 `;
 
 /* Header */
@@ -18,15 +30,18 @@ const Header = styled.div`
 `;
 const Heading = styled.h1`
   margin:0;
-  font-size:1.4rem;
-  font-weight:700;
-  letter-spacing:.5px;
+  font-size:1.55rem;
+  font-weight:800;
+  letter-spacing:.6px;
   display:flex;
   gap:.6rem;
   align-items:center;
+  background:linear-gradient(90deg,#312e81,#4834d4,#6366f1);
+  -webkit-background-clip:text;
+  color:transparent;
 `;
 const HeaderActions = styled.div`margin-left:auto; display:flex; gap:.6rem; flex-wrap:wrap;`;
-const PrimaryBtn = styled.button`background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff; border:none; padding:.55rem .9rem; font-size:.6rem; font-weight:600; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:.4rem; letter-spacing:.5px; box-shadow:0 4px 14px -6px rgba(79,70,229,.55); transition:filter .3s, transform .25s; &:hover{filter:brightness(1.07);} &:active{transform:translateY(1px);} &:disabled{opacity:.55; cursor:default; box-shadow:none;}`;
+const PrimaryBtn = styled.button`background:linear-gradient(135deg,#6366f1,#4834d4); color:#fff; border:1px solid rgba(255,255,255,.25); padding:.55rem .95rem; font-size:.6rem; font-weight:600; border-radius:12px; cursor:pointer; display:inline-flex; align-items:center; gap:.4rem; letter-spacing:.55px; box-shadow:0 8px 22px -10px rgba(72,52,212,.55), 0 0 0 1px rgba(255,255,255,.12) inset; backdrop-filter:blur(6px) saturate(160%); transition:filter .35s, transform .28s, box-shadow .4s; &:hover{filter:brightness(1.08); box-shadow:0 10px 28px -10px rgba(72,52,212,.65);} &:active{transform:translateY(1px);} &:disabled{opacity:.55; cursor:default; box-shadow:none;}`;
 const ToastStack = styled.div`position:fixed; bottom:1rem; right:1rem; display:flex; flex-direction:column; gap:.55rem; z-index:6000;`;
 const Toast = styled.div`background:#fff; border:1px solid #6366f1; padding:.65rem .85rem; font-size:.55rem; font-weight:600; color:#312e81; border-radius:12px; box-shadow:0 6px 22px -8px rgba(79,70,229,.45); animation:fadeIn .35s; @keyframes fadeIn{0%{opacity:0; transform:translateY(4px);}100%{opacity:1; transform:translateY(0);}}`;
 const RoleBadge = styled.span`
@@ -54,14 +69,19 @@ const Grid = styled.div`
   margin-bottom:1.5rem;
 `;
 const Panel = styled.div`
-  background:#fff;
-  border:1px solid #e2e8f0;
-  border-radius:20px;
-  padding:1.2rem 1.3rem 1.4rem;
+  position:relative;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(255,255,255,.55);
+  border-radius:22px;
+  padding:1.25rem 1.35rem 1.45rem;
   display:flex;
   flex-direction:column;
   gap:.9rem;
-  box-shadow:0 4px 16px -6px rgba(0,0,0,.06);
+  box-shadow:0 10px 32px -14px rgba(31,41,55,.35), 0 2px 6px -2px rgba(31,41,55,.15);
+  backdrop-filter:blur(14px) saturate(180%);
+  -webkit-backdrop-filter:blur(14px) saturate(180%);
+  overflow:hidden;
+  &:before{content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(145deg,rgba(99,102,241,.18),rgba(255,255,255,0) 55%); opacity:.9;}
 `;
 const PanelTitle = styled.h3`
   margin:0;
@@ -130,17 +150,20 @@ const Legend = styled.ul`
 
 /* Table */
 const TableWrap = styled.div`
+
   overflow:auto;
-  border:1px solid #e2e8f0;
-  border-radius:14px;
-  background:#fff;
+  border:1px solid rgba(255,255,255,.6);
+  border-radius:18px;
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(10px) saturate(160%);
+  -webkit-backdrop-filter:blur(10px) saturate(160%);
 `;
 const Table = styled.table`
   width:100%;
   border-collapse:collapse;
   font-size:.7rem;
-  th { text-align:left; background:#f1f5f9; font-weight:600; font-size:.6rem; letter-spacing:.5px; padding:.55rem .65rem; }
-  td { padding:.5rem .65rem; border-top:1px solid #e2e8f0; vertical-align:top; }
+  th { text-align:left; background:linear-gradient(135deg,#f1f5f9,#e2e8f0); font-weight:600; font-size:.6rem; letter-spacing:.55px; padding:.55rem .65rem; position:sticky; top:0; z-index:2; }
+  td { padding:.5rem .65rem; border-top:1px solid #e2e8f0; vertical-align:top; background:rgba(255,255,255,.55); }
 `;
 const ActionsCell = styled.div`
   display:flex;
@@ -628,73 +651,75 @@ const UserDashboard = () => {
           </div>
           <SubNote>Unit-based distribution (equipment split into Available vs In Use). For supplies, available equals remaining stock.</SubNote>
         </Panel>
-
-        <Panel>
-          <PanelTitle>🔍 Filters</PanelTitle>
-      {['student','teacher','staff'].includes(user?.role) && !!recentRequests.length && (
-        <Panel>
-          <PanelTitle>🕒 My Recent Requests</PanelTitle>
-          <Divider />
-          <Table style={{ fontSize:'.62rem' }}>
-            <thead>
-              <tr>
-                <th style={{width:'45%'}}>Item</th>
-                <th>Qty</th>
-                <th>Status</th>
-                <th>Votes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentRequests.map(r => (
-                <tr key={r.id}>
-                  <td>{r.item_name}</td>
-                  <td>{r.quantity}</td>
-                  <td><StatusBadge bg={r.status==='approved'? '#dcfce7': r.status==='rejected'? '#fee2e2':'#fef9c3'} color={r.status==='approved'? '#166534': r.status==='rejected'? '#b91c1c':'#92400e'}>{r.status}</StatusBadge></td>
-                  <td>{typeof r.votes==='number'? r.votes : '—'}</td>
+        {['student','teacher','staff'].includes(user?.role) && !!recentRequests.length && (
+          <Panel>
+            <PanelTitle>🕒 My Recent Requests</PanelTitle>
+            <Divider />
+            <Table style={{ fontSize:'.62rem' }}>
+              <thead>
+                <tr>
+                  <th style={{width:'45%'}}>Item</th>
+                  <th>Qty</th>
+                  <th>Status</th>
+                  <th>Votes</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-          <SubNote>Shows your 5 most recent submissions. Auto-refreshes every 15s.</SubNote>
-        </Panel>
-      )}
-          <Divider />
-          <Filters>
-            <FilterGroup>
-              <Label>Category</Label>
-              <Select value={filters.category} onChange={e=>setFilters(f=>({...f,category:e.target.value}))}>
-                <option value=''>All</option>
-                <option value='supplies'>Supplies</option>
-                <option value='equipment'>Equipment</option>
-              </Select>
-            </FilterGroup>
-            <FilterGroup>
-              <Label>Status</Label>
-              <Select value={filters.status} onChange={e=>setFilters(f=>({...f,status:e.target.value}))}>
-                <option value=''>All</option>
-                {(!filters.category || filters.category==='supplies') && <>
-                  <option value='in_stock'>In Stock</option>
-                  <option value='out_of_stock'>Out of Stock</option>
-                </>}
-                {(!filters.category || filters.category==='equipment') && <>
-                  <option value='available'>Available</option>
-                  <option value='in_use'>In Use</option>
-                  <option value='for_repair'>For Repair</option>
-                  <option value='disposed'>Disposed</option>
-                </>}
-              </Select>
-            </FilterGroup>
-            {(filters.category || filters.status) && (
-              <ClearBtn type='button' onClick={()=>setFilters({category:'',status:''})}>Clear</ClearBtn>
-            )}
-          </Filters>
-          <SubNote>Filters apply instantly to the list & analytics.</SubNote>
-        </Panel>
+              </thead>
+              <tbody>
+                {recentRequests.map(r => (
+                  <tr key={r.id}>
+                    <td>{r.item_name}</td>
+                    <td>{r.quantity}</td>
+                    <td><StatusBadge bg={r.status==='approved'? '#dcfce7': r.status==='rejected'? '#fee2e2':'#fef9c3'} color={r.status==='approved'? '#166534': r.status==='rejected'? '#b91c1c':'#92400e'}>{r.status}</StatusBadge></td>
+                    <td>{typeof r.votes==='number'? r.votes : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+            <SubNote>Shows your 5 most recent submissions. Auto-refreshes every 15s.</SubNote>
+          </Panel>
+        )}
       </Grid>
+
+      {/* Filters moved outside grid and placed above Inventory Items */}
+      <Panel>
+        <PanelTitle>🔍 Filters</PanelTitle>
+        <Divider />
+        <Filters>
+          <FilterGroup>
+            <Label>Category</Label>
+            <Select value={filters.category} onChange={e=>setFilters(f=>({...f,category:e.target.value}))}>
+              <option value=''>All</option>
+              <option value='supplies'>Supplies</option>
+              <option value='equipment'>Equipment</option>
+            </Select>
+          </FilterGroup>
+          <FilterGroup>
+            <Label>Status</Label>
+            <Select value={filters.status} onChange={e=>setFilters(f=>({...f,status:e.target.value}))}>
+              <option value=''>All</option>
+              {(!filters.category || filters.category==='supplies') && <>
+                <option value='in_stock'>In Stock</option>
+                <option value='out_of_stock'>Out of Stock</option>
+              </>}
+              {(!filters.category || filters.category==='equipment') && <>
+                <option value='available'>Available</option>
+                <option value='in_use'>In Use</option>
+                <option value='for_repair'>For Repair</option>
+                <option value='disposed'>Disposed</option>
+              </>}
+            </Select>
+          </FilterGroup>
+          {(filters.category || filters.status) && (
+            <ClearBtn type='button' onClick={()=>setFilters({category:'',status:''})}>Clear</ClearBtn>
+          )}
+        </Filters>
+        <SubNote>Filters apply instantly to the list & analytics.</SubNote>
+      </Panel>
 
       <Panel>
         <PanelTitle>📃 Inventory Items</PanelTitle>
         <Divider />
+        <div style={{padding:'0.75rem 0.5rem 0.2rem'}}>
         <TableWrap>
           {error && <Empty style={{ color:'#b91c1c', background:'#fee2e2', borderRadius:'8px', fontWeight:600 }}>{error}</Empty>}
           {loading && !error && <Loading>Loading items...</Loading>}
@@ -740,6 +765,7 @@ const UserDashboard = () => {
             </Table>
           )}
         </TableWrap>
+        </div>
         {/* Modal mounts outside table */}
       </Panel>
 
@@ -748,6 +774,7 @@ const UserDashboard = () => {
         <Panel>
           <PanelTitle>🧾 My Claimed Equipment & Supplies</PanelTitle>
           <Divider />
+          <div style={{padding:'0.75rem 0.6rem 0.4rem'}}>
           {loadingMyClaimed && <Loading>Loading claimed items...</Loading>}
           {(() => {
             // Build unified rows: pending/approved/rejected claims + live in-use equipment
@@ -832,7 +859,8 @@ const UserDashboard = () => {
               </>
             );
           })()}
-          <SubNote>All your claims (pending / approved / rejected) plus approved in-use equipment shown here. Return only applies to approved equipment.</SubNote>
+          </div>
+          <SubNote style={{marginTop:'.4rem'}}>All your claims (pending / approved / rejected) plus approved in-use equipment shown here. Return only applies to approved equipment.</SubNote>
         </Panel>
       )}
 

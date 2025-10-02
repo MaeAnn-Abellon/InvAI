@@ -312,34 +312,19 @@
 // filepath: d:\Capstone\InvAI\frontend\src\pages\profile\Profile.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import styled from '@emotion/styled';
+import { PageSurface, GradientHeading, GlassPanel, PrimaryButton, SubNote as GSubNote, Divider as GDivider } from '@/components/ui/Glass';
 import { useAuth } from '@/context/useAuth';
 import { inventoryApi } from '@/services/inventoryApi';
 import defaultAvatar from '@/assets/avatar.png'; // add your default image
 
-const PageContainer = styled.div`
-  padding: 2rem;
-  background: #f8fafc;
-  max-width: 900px;
-`;
+const PageContainer = styled(PageSurface)`padding:2rem 2.25rem 3rem; max-width:1100px; margin:0 auto;`;
 
-const Heading = styled.h1`
-  font-size: 1.9rem;
-  margin: 0 0 1rem;
-`;
-const SummaryCard = styled.div`
-  background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.1rem 1.25rem 1.25rem; margin:0 0 1.5rem; display:flex; flex-direction:column; gap:.6rem; box-shadow:0 4px 14px -6px rgba(0,0,0,.05);
-`;
+const Heading = styled(GradientHeading)`font-size:2.05rem; margin:0 0 1.4rem;`;
+const SummaryCard = styled(GlassPanel)`padding:1.1rem 1.25rem 1.25rem; border-radius:24px; margin:0 0 1.5rem; gap:.6rem;`;
 const InlineBadges = styled.div`display:flex; flex-wrap:wrap; gap:.45rem;`;
 const Pill = styled.span`background:${p=>p.variant==='role'?'#6366f1':'#f1f5f9'}; color:${p=>p.variant==='role'?'#fff':'#334155'}; font-size:.55rem; font-weight:600; padding:.3rem .6rem; border-radius:999px; letter-spacing:.5px; text-transform:uppercase;`;
 
-const Section = styled.section`
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.5rem 1.75rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-`;
+const Section = styled(GlassPanel)`padding:1.6rem 1.75rem 1.9rem; border-radius:26px; margin-bottom:1.6rem;`;
 
 const SectionTitle = styled.h2`
   font-size: 1.05rem;
@@ -390,21 +375,7 @@ const Actions = styled.div`
   margin-top: 1.25rem;
 `;
 
-const Button = styled.button`
-  background: ${p => p.variant === 'outline' ? '#ffffff' : '#4834d4'};
-  border: 1px solid ${p => p.variant === 'outline' ? '#cbd5e1' : '#4834d4'};
-  color: ${p => p.variant === 'outline' ? '#1e293b' : '#ffffff'};
-  padding: 0.7rem 1.25rem;
-  font-size: 0.85rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background .2s, border-color .2s;
-  &:hover {
-    background: ${p => p.variant === 'outline' ? '#f1f5f9' : '#372aaa'};
-    border-color: ${p => p.variant === 'outline' ? '#94a3b8' : '#372aaa'};
-  }
-`;
+const Button = styled(PrimaryButton)`font-size:.7rem; padding:.65rem 1.1rem; border-radius:12px; background:${p=>p.variant==='outline'?'rgba(255,255,255,.85)':'linear-gradient(135deg,#6366f1,#4834d4)'}; color:${p=>p.variant==='outline'?'#1e293b':'#fff'}; border:${p=>p.variant==='outline'?'1px solid #e2e8f0':'1px solid rgba(255,255,255,.25)'}; box-shadow:${p=>p.variant==='outline'?'0 2px 6px -2px rgba(31,41,55,.15)':'0 8px 22px -10px rgba(72,52,212,.55)'}; &:hover{filter:brightness(1.06);} `;
 
 const Divider = styled.hr`
   border: none;
@@ -414,41 +385,12 @@ const Divider = styled.hr`
 `;
 
 const DangerZone = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-  h3 {
-    margin: 0 0 0.35rem;
-    font-size: 0.95rem;
-    color: #b91c1c;
-  }
-  p {
-    margin: 0;
-    font-size: 0.75rem;
-    color: #7f1d1d;
-  }
+  display:flex; justify-content:space-between; align-items:center; background:linear-gradient(145deg,#fef2f2,#fff); border:1px solid #fecaca; border-radius:16px; padding:1rem 1.25rem; flex-wrap:wrap; gap:1rem; box-shadow:0 6px 20px -10px rgba(185,28,28,.35);
+  h3{margin:0 0 .35rem; font-size:.95rem; color:#b91c1c;}
+  p{margin:0; font-size:.7rem; color:#7f1d1d;}
 `;
 
-const DangerButton = styled.button`
-  background: #dc2626;
-  border: 1px solid #dc2626;
-  color: #ffffff;
-  padding: 0.6rem 1rem;
-  font-size: 0.75rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  &:hover {
-    background: #b91c1c;
-    border-color: #b91c1c;
-  }
-`;
+const DangerButton = styled(PrimaryButton)`background:linear-gradient(135deg,#f87171,#dc2626); border:1px solid rgba(255,255,255,.3); padding:.6rem 1rem; font-size:.65rem; box-shadow:0 8px 22px -10px rgba(220,38,38,.55); &:hover{filter:brightness(1.05);} `;
 
 /* Added styles for profile photo */
 const PhotoRow = styled.div`
@@ -457,15 +399,7 @@ const PhotoRow = styled.div`
   gap:1.5rem;
   flex-wrap:wrap;
 `;
-const Avatar = styled.img`
-  width:110px;
-  height:110px;
-  border-radius:50%;
-  object-fit:cover;
-  border:4px solid #fff;
-  box-shadow:0 4px 14px -4px rgba(0,0,0,.25);
-  background:#fff;
-`;
+const Avatar = styled.img`width:110px; height:110px; border-radius:50%; object-fit:cover; border:4px solid #fff; box-shadow:0 10px 24px -12px rgba(31,41,55,.4),0 0 0 1px rgba(255,255,255,.6); background:#fff;`;
 const PhotoButtons = styled.div`
   display:flex;
   gap:.6rem;
@@ -594,7 +528,7 @@ export default function Profile() {
   return (
     <>
     <PageContainer>
-      <Heading>Profile / Account Settings</Heading>
+  <Heading>Profile / Account Settings</Heading>
       <SummaryCard>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'1rem', flexWrap:'wrap'}}>
           <div style={{flex:1,minWidth:240}}>
@@ -672,7 +606,7 @@ export default function Profile() {
       )}
 
       {/* EXISTING sections below remain unchanged */}
-      <Section as="form" onSubmit={onSave}>
+  <Section as="form" onSubmit={onSave}>
         <SectionTitle>Account Information</SectionTitle>
         <FormGrid>
           <Field>
@@ -817,7 +751,7 @@ export default function Profile() {
     </PageContainer>
     { !!toasts.length && (
       <div style={{position:'fixed', bottom:'1rem', left:'50%', transform:'translateX(-50%)', display:'flex', flexDirection:'column', gap:'.5rem', zIndex:6000}}>
-        {toasts.map(t=> <div key={t.id} style={{background:'#fff', border:'1px solid #6366f1', padding:'.55rem .75rem', fontSize:'.55rem', fontWeight:600, color:'#312e81', borderRadius:'12px', boxShadow:'0 4px 18px -6px rgba(79,70,229,.4)'}}>{t.msg}</div>)}
+        {toasts.map(t=> <div key={t.id} style={{background:'rgba(255,255,255,.9)', border:'1px solid #6366f1', padding:'.55rem .75rem', fontSize:'.55rem', fontWeight:600, color:'#312e81', borderRadius:'12px', boxShadow:'0 6px 22px -8px rgba(79,70,229,.45)', backdropFilter:'blur(6px) saturate(150%)'}}>{t.msg}</div>)}
       </div>
     ) }
     </>

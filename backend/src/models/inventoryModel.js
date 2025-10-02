@@ -257,17 +257,21 @@ export async function approveClaim(claimId, managerId, approve = true) {
         if (item.status !== 'available') throw new Error('Equipment not available');
         if (claim.quantity > item.quantity) throw new Error('Insufficient available units');
         const remaining = item.quantity - claim.quantity;
-        // Reduce original item's quantity (or delete if none left)
+        // IMPORTANT: Do NOT delete the original item row before updating the claim because
+        // inventory_claims.item_id has ON DELETE CASCADE. Deleting would remove the claim row,
+        // and later inserting an in_use row referencing claim_id would violate FK.
+        // Instead, keep the original row as the parent (quantity may become 0).
         if (remaining > 0) {
           await client.query('UPDATE inventory_items SET quantity=$1, updated_at=NOW() WHERE id=$2', [remaining, item.id]);
         } else {
-          await client.query('DELETE FROM inventory_items WHERE id=$1', [item.id]);
+          // Keep record with quantity 0 ("exhausted" available units) so claim history & FK remain valid.
+          await client.query('UPDATE inventory_items SET quantity=0, updated_at=NOW() WHERE id=$1', [item.id]);
         }
-        // Insert new in-use row capturing claimed units
+        // Insert new in-use row capturing claimed units. Always reference parent_item_id = original item id.
         await client.query(
           `INSERT INTO inventory_items (name, description, category, status, quantity, created_by, parent_item_id, claimed_by, claim_id)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-          [item.name, item.description, 'equipment', 'in_use', claim.quantity, managerId || null, remaining>0? item.id : null, claim.requested_by, claim.id]
+          [item.name, item.description, 'equipment', 'in_use', claim.quantity, managerId || null, item.id, claim.requested_by, claim.id]
         );
       } else {
         if (item.status === 'out_of_stock') throw new Error('Out of stock');
