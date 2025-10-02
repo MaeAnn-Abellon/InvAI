@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { fetchForecastData } from '../../services/managerApi';
+// Replacing mock forecast with real backend depletion projection
+import { inventoryApi } from '../../services/inventoryApi';
 
 const Page = styled.div`padding:2rem 2.25rem 3rem; background:#f8fafc;`;
 const Title = styled.h1`margin:0 0 1.3rem; font-size:1.45rem; font-weight:700;`;
@@ -22,61 +23,89 @@ const ChartBox = styled.div`
 `;
 
 const ManagerForecasts = () => {
-  const [department, setDepartment] = useState('All');
   const [loading, setLoading] = useState(true);
   const [forecasts, setForecasts] = useState([]);
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState([]); // derived client-side
+  const [error, setError] = useState(null);
+  const [windowDays, setWindowDays] = useState(30);
 
   useEffect(() => {
     (async () => {
-      setLoading(true);
-      const res = await fetchForecastData({ department });
-      setForecasts(res.forecasts);
-      setSuggestions(res.suggestions);
-      setLoading(false);
+      setLoading(true); setError(null);
+      try {
+        const data = await inventoryApi.forecastDepletion({ windowDays });
+        const list = data.forecasts || [];
+        setForecasts(list);
+        // Simple suggestion heuristic: items with daysToDeplete <= 14 or already out_of_stock
+        const sug = list
+          .filter(it => (it.daysToDeplete !== null && it.daysToDeplete <= 14) || it.status === 'out_of_stock')
+          .slice(0,10)
+          .map(it => ({
+            item: it.name,
+            reason: it.status === 'out_of_stock' ? 'Already out of stock' : `Projected depletion in ${Math.round(it.daysToDeplete)} days`
+          }));
+        setSuggestions(sug);
+      } catch(e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
     })();
-  }, [department]);
+  }, [windowDays]);
 
   if (loading) return <div>Loading forecasts...</div>;
 
   return (
     <Page>
-      <Title>AI Forecasts</Title>
-      <label>Department
-        <select value={department} onChange={e=>setDepartment(e.target.value)}>
-          <option>All</option>
-          <option>Agriculture</option>
-          <option>Fisheries</option>
-          <option>IT</option>
-        </select>
-      </label>
+      <Title>AI Depletion Forecasts</Title>
+      <div style={{display:'flex', gap:'1rem', alignItems:'center', flexWrap:'wrap'}}>
+        <label style={{fontSize:'.75rem'}}>Window (days)
+          <select value={windowDays} onChange={e=>setWindowDays(parseInt(e.target.value,10))} style={{marginLeft:'.4rem'}}>
+            {[14,30,60,90].map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </label>
+        {error && <span style={{color:'#dc2626', fontSize:'.7rem'}}>Error: {error}</span>}
+        <small style={{color:'#64748b'}}>Heuristic forecast based on recent approved claims.</small>
+      </div>
 
       <section>
-        <h3>Forecast Graphs (mock)</h3>
-        <div className="graphs">
-          {forecasts.map(f => (
-            <div key={f.id} className="forecast-card">
-              <strong>{f.label}</strong>
-              <MiniLine data={f.data} />
-              <small>Unit: {f.unit}</small>
-            </div>
-          ))}
-        </div>
+        <h3>Projected Depletion</h3>
+        <table style={{width:'100%', fontSize:'.7rem', borderCollapse:'collapse'}}>
+          <thead>
+            <tr style={{textAlign:'left', background:'#f1f5f9'}}>
+              <th style={{padding:'.4rem'}}>Item</th>
+              <th style={{padding:'.4rem'}}>Qty</th>
+              <th style={{padding:'.4rem'}}>Avg Daily Use</th>
+              <th style={{padding:'.4rem'}}>Days Left</th>
+              <th style={{padding:'.4rem'}}>Depletion Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {forecasts.map(it => (
+              <tr key={it.id} style={{borderTop:'1px solid #e2e8f0'}}>
+                <td style={{padding:'.45rem .4rem'}}>{it.name}</td>
+                <td style={{padding:'.45rem .4rem'}}>{it.quantity}</td>
+                <td style={{padding:'.45rem .4rem'}}>{it.avgDailyUsage?.toFixed(2)}</td>
+                <td style={{padding:'.45rem .4rem'}}>{it.daysToDeplete ? Math.round(it.daysToDeplete) : '—'}</td>
+                <td style={{padding:'.45rem .4rem'}}>{it.projectedDepletionDate ? new Date(it.projectedDepletionDate).toLocaleDateString() : '—'}</td>
+              </tr>
+            ))}
+            {!forecasts.length && (
+              <tr><td colSpan={5} style={{padding:'.7rem', textAlign:'center', color:'#64748b'}}>No usage data in window.</td></tr>
+            )}
+          </tbody>
+        </table>
       </section>
 
-      <section>
-        <h3>Suggested Restocking</h3>
-        <ul>
-          {suggestions.map((s,i)=> <li key={i}><strong>{s.item}</strong>: {s.reason}</li>)}
+      <section style={{marginTop:'1.5rem'}}>
+        <h3>Suggested Restocking (Next 2 Weeks)</h3>
+        <ul style={{fontSize:'.7rem', paddingLeft:'1rem'}}>
+          {suggestions.map((s,i)=> <li key={i} style={{marginBottom:'.3rem'}}><strong>{s.item}</strong>: {s.reason}</li>)}
+          {!suggestions.length && <li style={{color:'#64748b'}}>No urgent restock suggestions.</li>}
         </ul>
       </section>
     </Page>
   );
-};
-const btnStyle = {
-  background:'#4834d4', color:'#fff', border:'none',
-  padding:'.6rem .9rem', fontSize:'.65rem', fontWeight:600,
-  borderRadius:'10px', cursor:'pointer'
 };
 export default ManagerForecasts;
 

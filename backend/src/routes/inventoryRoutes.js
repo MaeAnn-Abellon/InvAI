@@ -1,6 +1,6 @@
 import express from 'express';
 import { authRequired, managerOrAdmin } from '../middleware/auth.js';
-import { listItems, listItemsForUser, getItem, getItemForUser, createItem, updateItem, deleteItem, listStatusHistory, createClaim, listClaims, approveClaim, listClaimsPaged, requestEquipmentReturn, approveEquipmentReturn, listUserClaimedEquipment, listPendingReturns, listClaimsByUser, createItemRequest, listItemRequests, decideItemRequest, castVoteOnRequest, listApprovedRequestsForVoting } from '../models/inventoryModel.js';
+import { listItems, listItemsForUser, getItem, getItemForUser, createItem, updateItem, deleteItem, listStatusHistory, createClaim, listClaims, approveClaim, listClaimsPaged, requestEquipmentReturn, approveEquipmentReturn, listUserClaimedEquipment, listPendingReturns, listClaimsByUser, createItemRequest, listItemRequests, decideItemRequest, castVoteOnRequest, listApprovedRequestsForVoting, forecastDepletion } from '../models/inventoryModel.js';
 import { pool } from '../db.js';
 
 const router = express.Router();
@@ -78,6 +78,17 @@ router.get('/analytics/summary', managerOrAdmin, async (req,res) => {
     });
   } catch(e){
     res.status(400).json({ error: e.message || 'Analytics error' });
+  }
+});
+
+// Forecast (AI-ish depletion projection)
+router.get('/forecast/depletion', managerOrAdmin, async (req,res) => {
+  try {
+    const { windowDays, limit } = req.query;
+    const data = await forecastDepletion(req.user, { windowDays, limit });
+    res.json({ forecasts: data });
+  } catch(e) {
+    res.status(400).json({ error: e.message || 'Forecast error' });
   }
 });
 

@@ -460,3 +460,71 @@ export async function listApprovedRequestsForVoting(user) {
      ORDER BY r.decided_at DESC NULLS LAST, r.id DESC`, [user.department||'', user.course||'', user.id]);
   return rows;
 }
+
+// =====================
+// AI-ish Forecasting (Depletion Projection)
+// =====================
+// Heuristic: For supplies, use approved claim history over a window (default 30 days) to
+// estimate average daily consumption and project days until depletion.
+// This is a lightweight statistical approach (no external ML dependency) but structured so
+// you can later swap in a proper regression / external AI service.
+export async function forecastDepletion(user, { windowDays = 30, limit = 20 } = {}) {
+  if (!user || !['manager','admin'].includes(user.role)) return [];
+  const w = Math.max(7, Math.min(120, parseInt(windowDays,10) || 30)); // clamp 7..120 days
+  const l = Math.max(1, Math.min(100, parseInt(limit,10) || 20));
+
+  // For managers scope to their created items; admins see all.
+  const managerFilterId = user.role === 'manager' ? user.id : null;
+  // Build query: aggregate usage per item (approved claims) within window, compute avg daily usage,
+  // project days to depletion and date.
+  const sql = `
+    WITH usage AS (
+      SELECT item_id,
+             SUM(quantity)::numeric AS total_used,
+             COUNT(DISTINCT DATE(decided_at)) AS usage_days
+      FROM inventory_claims
+      WHERE status='approved'
+        AND decided_at >= NOW() - ($1 || ' days')::interval
+      GROUP BY item_id
+    )
+    SELECT i.id,
+           i.name,
+           i.quantity,
+           i.status,
+           i.category,
+           i.created_by AS "createdBy",
+           COALESCE((u.total_used / NULLIF(u.usage_days,0)),0)::float AS avg_daily_usage,
+           CASE
+             WHEN COALESCE((u.total_used / NULLIF(u.usage_days,0)),0) > 0 AND i.quantity > 0
+               THEN (i.quantity / (u.total_used / u.usage_days))::float
+             ELSE NULL
+           END AS days_to_deplete,
+           CASE
+             WHEN COALESCE((u.total_used / NULLIF(u.usage_days,0)),0) > 0 AND i.quantity > 0
+               THEN (NOW() + ((i.quantity / (u.total_used / u.usage_days)) * INTERVAL '1 day'))
+             ELSE NULL
+           END AS projected_depletion_ts,
+           u.total_used::float AS total_used_in_window,
+           u.usage_days
+    FROM inventory_items i
+    LEFT JOIN usage u ON u.item_id = i.id
+    WHERE i.category='supplies'
+      AND (i.status IN ('in_stock','out_of_stock'))
+      AND ($2::int IS NULL OR i.created_by = $2)
+    ORDER BY days_to_deplete NULLS LAST, avg_daily_usage DESC
+    LIMIT $3;`;
+  const { rows } = await pool.query(sql, [w, managerFilterId, l]);
+  return rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    category: r.category,
+    status: r.status,
+    quantity: r.quantity,
+    avgDailyUsage: r.avg_daily_usage,
+    daysToDeplete: r.days_to_deplete,
+    projectedDepletionDate: r.projected_depletion_ts ? new Date(r.projected_depletion_ts).toISOString() : null,
+    windowDays: w,
+    totalUsedInWindow: r.total_used_in_window || 0,
+    usageDays: r.usage_days || 0
+  }));
+}

@@ -68,4 +68,12 @@ export const inventoryApi = {
   , decideRequest: (id, approve=true) => raw(`${basePath}/requests/${id}/decision`, { method:'POST', body: JSON.stringify({ approve }) })
   , listApprovedForVoting: () => raw(`${basePath}/requests/approved/voting`)
   , voteOnRequest: (id) => raw(`${basePath}/requests/${id}/vote`, { method:'POST' })
+  // Forecasting
+  , forecastDepletion: (params={}) => {
+      const query = new URLSearchParams();
+      if (params.windowDays) query.set('windowDays', params.windowDays);
+      if (params.limit) query.set('limit', params.limit);
+      const qs = query.toString();
+      return raw(`${basePath}/forecast/depletion${qs ? ('?'+qs): ''}`);
+    }
 };
