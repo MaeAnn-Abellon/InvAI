@@ -1,51 +1,123 @@
 import React, { useEffect, useState } from 'react';
-import styled from '@emotion/styled';
-// Replacing mock forecast with real backend depletion projection
+import { useNavigate } from 'react-router-dom';
 import { inventoryApi } from '../../services/inventoryApi';
 
-const Page = styled.div`padding:2rem 2.25rem 3rem; background:#f8fafc;`;
-const Title = styled.h1`margin:0 0 1.3rem; font-size:1.45rem; font-weight:700;`;
-const Grid = styled.div`display:grid; gap:1.4rem; grid-template-columns:repeat(auto-fit,minmax(340px,1fr));`;
-const Card = styled.div`
-  background:#fff; border:1px solid #e2e8f0; border-radius:22px;
-  padding:1.4rem 1.5rem 1.55rem; display:flex; flex-direction:column; gap:.9rem;
-  box-shadow:0 4px 14px -5px rgba(0,0,0,.05);
-`;
-const SectionTitle = styled.h2`margin:0; font-size:1rem; font-weight:700;`;
-const Suggestions = styled.ul`
-  list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.55rem;
-  li{background:#f1f5f9; padding:.6rem .7rem; border-radius:10px; font-size:.65rem; font-weight:500; color:#334155;}
-`;
-const ChartBox = styled.div`
-  background:#f8fafc; border:1px dashed #cbd5e1; height:220px;
-  border-radius:16px; display:flex; align-items:center; justify-content:center;
-  font-size:.65rem; color:#64748b; font-weight:500;
-`;
+// Modern styling to match dashboard
+const modernStyles = {
+  page: {
+    padding: '2rem',
+    background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+    minHeight: '100vh'
+  },
+  header: {
+    background: 'rgba(255,255,255,0.9)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '20px',
+    padding: '1.5rem 2rem',
+    marginBottom: '2rem',
+    border: '1px solid rgba(255,255,255,0.2)',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+  },
+  title: {
+    margin: 0,
+    fontSize: '2rem',
+    fontWeight: 800,
+    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    marginBottom: '.5rem'
+  },
+  subtitle: {
+    margin: 0,
+    color: '#64748b',
+    fontSize: '.9rem'
+  },
+  controls: {
+    display: 'flex',
+    gap: '1rem',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: '1rem'
+  },
+  card: {
+    background: 'rgba(255,255,255,0.9)',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: '20px',
+    padding: '2rem',
+    marginBottom: '2rem',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+  },
+  table: {
+    width: '100%',
+    fontSize: '.85rem',
+    borderCollapse: 'collapse',
+    background: '#fff',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+  },
+  th: {
+    padding: '1rem',
+    textAlign: 'left',
+    background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+    fontWeight: 600,
+    color: '#374151',
+    borderBottom: '1px solid #e5e7eb'
+  },
+  td: {
+    padding: '.75rem 1rem',
+    borderBottom: '1px solid #f3f4f6'
+  },
+  backButton: {
+    background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+    color: '#fff',
+    border: 'none',
+    padding: '.75rem 1.25rem',
+    borderRadius: '12px',
+    fontSize: '.85rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: '0 4px 15px rgba(107, 114, 128, 0.4)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '.5rem'
+  }
+};
 
 const ManagerForecasts = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [forecasts, setForecasts] = useState([]);
-  const [suggestions, setSuggestions] = useState([]); // derived client-side
+  const [suggestions, setSuggestions] = useState([]);
   const [error, setError] = useState(null);
   const [windowDays, setWindowDays] = useState(30);
 
   useEffect(() => {
     (async () => {
-      setLoading(true); setError(null);
+      setLoading(true);
+      setError(null);
       try {
         const data = await inventoryApi.forecastDepletion({ windowDays });
         const list = data.forecasts || [];
         setForecasts(list);
-        // Simple suggestion heuristic: items with daysToDeplete <= 14 or already out_of_stock
+        
+        // Enhanced suggestion heuristic
         const sug = list
           .filter(it => (it.daysToDeplete !== null && it.daysToDeplete <= 14) || it.status === 'out_of_stock')
-          .slice(0,10)
+          .slice(0, 10)
           .map(it => ({
             item: it.name,
-            reason: it.status === 'out_of_stock' ? 'Already out of stock' : `Projected depletion in ${Math.round(it.daysToDeplete)} days`
+            priority: it.status === 'out_of_stock' ? 'critical' : it.daysToDeplete <= 7 ? 'high' : 'medium',
+            reason: it.status === 'out_of_stock' 
+              ? 'Already out of stock - Immediate restock required' 
+              : `Projected depletion in ${Math.round(it.daysToDeplete)} days`,
+            daysLeft: it.daysToDeplete
           }));
         setSuggestions(sug);
-      } catch(e) {
+      } catch (e) {
         setError(e.message);
       } finally {
         setLoading(false);
@@ -53,75 +125,318 @@ const ManagerForecasts = () => {
     })();
   }, [windowDays]);
 
-  if (loading) return <div>Loading forecasts...</div>;
+  if (loading) {
+    return (
+      <div style={modernStyles.page}>
+        <div style={modernStyles.card}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            gap: '1rem',
+            padding: '3rem'
+          }}>
+            <div style={{
+              width: '24px',
+              height: '24px',
+              border: '3px solid #e2e8f0',
+              borderTop: '3px solid #4f46e5',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <span style={{ fontSize: '1.1rem', color: '#64748b' }}>
+              Loading AI forecasts...
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Page>
-      <Title>AI Depletion Forecasts</Title>
-      <div style={{display:'flex', gap:'1rem', alignItems:'center', flexWrap:'wrap'}}>
-        <label style={{fontSize:'.75rem'}}>Window (days)
-          <select value={windowDays} onChange={e=>setWindowDays(parseInt(e.target.value,10))} style={{marginLeft:'.4rem'}}>
-            {[14,30,60,90].map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
-        </label>
-        {error && <span style={{color:'#dc2626', fontSize:'.7rem'}}>Error: {error}</span>}
-        <small style={{color:'#64748b'}}>Heuristic forecast based on recent approved claims.</small>
+    <div style={modernStyles.page}>
+      {/* Header */}
+      <div style={modernStyles.header}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+          <div>
+            <h1 style={modernStyles.title}>🤖 AI Depletion Forecasts</h1>
+            <p style={modernStyles.subtitle}>
+              Intelligent predictions for inventory management and restocking
+            </p>
+          </div>
+          <button 
+            onClick={() => navigate('/manager/dashboard')}
+            style={modernStyles.backButton}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 8px 25px rgba(107, 114, 128, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 15px rgba(107, 114, 128, 0.4)';
+            }}
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
+        
+        <div style={modernStyles.controls}>
+          <label style={{ fontSize: '.85rem', fontWeight: 500, color: '#374151' }}>
+            Forecast Window:
+            <select 
+              value={windowDays} 
+              onChange={e => setWindowDays(parseInt(e.target.value, 10))}
+              style={{
+                marginLeft: '.5rem',
+                padding: '.5rem .75rem',
+                borderRadius: '8px',
+                border: '1px solid #d1d5db',
+                fontSize: '.85rem',
+                background: '#fff'
+              }}
+            >
+              {[14, 30, 60, 90].map(d => (
+                <option key={d} value={d}>{d} days</option>
+              ))}
+            </select>
+          </label>
+          {error && (
+            <span style={{
+              color: '#ef4444',
+              fontSize: '.85rem',
+              background: '#fef2f2',
+              padding: '.5rem .75rem',
+              borderRadius: '8px',
+              border: '1px solid #fecaca'
+            }}>
+              ⚠️ Error: {error}
+            </span>
+          )}
+          <small style={{ 
+            color: '#9ca3af',
+            background: '#f9fafb',
+            padding: '.4rem .6rem',
+            borderRadius: '6px',
+            fontSize: '.75rem'
+          }}>
+            AI predictions based on usage patterns
+          </small>
+        </div>
       </div>
 
-      <section>
-        <h3>Projected Depletion</h3>
-        <table style={{width:'100%', fontSize:'.7rem', borderCollapse:'collapse'}}>
+      {/* Forecast Table */}
+      <div style={modernStyles.card}>
+        <h3 style={{ margin: '0 0 1.5rem', fontSize: '1.2rem', fontWeight: 700, color: '#1e293b' }}>
+          📊 Projected Depletion Analysis
+        </h3>
+        <table style={modernStyles.table}>
           <thead>
-            <tr style={{textAlign:'left', background:'#f1f5f9'}}>
-              <th style={{padding:'.4rem'}}>Item</th>
-              <th style={{padding:'.4rem'}}>Qty</th>
-              <th style={{padding:'.4rem'}}>Avg Daily Use</th>
-              <th style={{padding:'.4rem'}}>Days Left</th>
-              <th style={{padding:'.4rem'}}>Depletion Date</th>
+            <tr>
+              <th style={modernStyles.th}>Item Name</th>
+              <th style={modernStyles.th}>Current Qty</th>
+              <th style={modernStyles.th}>Daily Usage</th>
+              <th style={modernStyles.th}>Days Remaining</th>
+              <th style={modernStyles.th}>Depletion Date</th>
+              <th style={modernStyles.th}>Status</th>
             </tr>
           </thead>
           <tbody>
-            {forecasts.map(it => (
-              <tr key={it.id} style={{borderTop:'1px solid #e2e8f0'}}>
-                <td style={{padding:'.45rem .4rem'}}>{it.name}</td>
-                <td style={{padding:'.45rem .4rem'}}>{it.quantity}</td>
-                <td style={{padding:'.45rem .4rem'}}>{it.avgDailyUsage?.toFixed(2)}</td>
-                <td style={{padding:'.45rem .4rem'}}>{it.daysToDeplete ? Math.round(it.daysToDeplete) : '—'}</td>
-                <td style={{padding:'.45rem .4rem'}}>{it.projectedDepletionDate ? new Date(it.projectedDepletionDate).toLocaleDateString() : '—'}</td>
+            {forecasts.map(item => (
+              <tr key={item.id} style={{ transition: 'background-color 0.2s' }}>
+                <td style={modernStyles.td}>
+                  <strong style={{ color: '#1e293b' }}>{item.name}</strong>
+                </td>
+                <td style={modernStyles.td}>{item.quantity}</td>
+                <td style={modernStyles.td}>
+                  {item.avgDailyUsage ? item.avgDailyUsage.toFixed(2) : '—'}
+                </td>
+                <td style={modernStyles.td}>
+                  {item.daysToDeplete ? (
+                    <span style={{
+                      color: item.daysToDeplete <= 7 ? '#ef4444' : item.daysToDeplete <= 14 ? '#f59e0b' : '#10b981',
+                      fontWeight: 600
+                    }}>
+                      {Math.round(item.daysToDeplete)}
+                    </span>
+                  ) : '—'}
+                </td>
+                <td style={modernStyles.td}>
+                  {item.projectedDepletionDate 
+                    ? new Date(item.projectedDepletionDate).toLocaleDateString() 
+                    : '—'
+                  }
+                </td>
+                <td style={modernStyles.td}>
+                  <StatusBadge status={item.status} daysLeft={item.daysToDeplete} />
+                </td>
               </tr>
             ))}
             {!forecasts.length && (
-              <tr><td colSpan={5} style={{padding:'.7rem', textAlign:'center', color:'#64748b'}}>No usage data in window.</td></tr>
+              <tr>
+                <td colSpan={6} style={{
+                  ...modernStyles.td,
+                  textAlign: 'center',
+                  color: '#64748b',
+                  padding: '2rem',
+                  fontStyle: 'italic'
+                }}>
+                  No usage data available for the selected time window
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
-      </section>
+      </div>
 
-      <section style={{marginTop:'1.5rem'}}>
-        <h3>Suggested Restocking (Next 2 Weeks)</h3>
-        <ul style={{fontSize:'.7rem', paddingLeft:'1rem'}}>
-          {suggestions.map((s,i)=> <li key={i} style={{marginBottom:'.3rem'}}><strong>{s.item}</strong>: {s.reason}</li>)}
-          {!suggestions.length && <li style={{color:'#64748b'}}>No urgent restock suggestions.</li>}
-        </ul>
-      </section>
-    </Page>
+      {/* Suggestions */}
+      <div style={modernStyles.card}>
+        <h3 style={{ margin: '0 0 1.5rem', fontSize: '1.2rem', fontWeight: 700, color: '#1e293b' }}>
+          💡 Restocking Recommendations
+        </h3>
+        {suggestions.length > 0 ? (
+          <div style={{ display: 'grid', gap: '.75rem' }}>
+            {suggestions.map((suggestion, index) => (
+              <div key={index} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '1rem',
+                background: suggestion.priority === 'critical' ? '#fef2f2' : 
+                           suggestion.priority === 'high' ? '#fef9c3' : '#f0fdf4',
+                borderLeft: `4px solid ${
+                  suggestion.priority === 'critical' ? '#ef4444' :
+                  suggestion.priority === 'high' ? '#f59e0b' : '#10b981'
+                }`,
+                borderRadius: '8px'
+              }}>
+                <div>
+                  <strong style={{ 
+                    color: '#1e293b',
+                    fontSize: '.9rem'
+                  }}>
+                    {suggestion.item}
+                  </strong>
+                  <p style={{ 
+                    margin: '.25rem 0 0',
+                    fontSize: '.8rem',
+                    color: '#64748b'
+                  }}>
+                    {suggestion.reason}
+                  </p>
+                </div>
+                <PriorityBadge priority={suggestion.priority} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{
+            textAlign: 'center',
+            padding: '2rem',
+            color: '#10b981',
+            background: '#f0fdf4',
+            borderRadius: '12px',
+            border: '1px dashed #bbf7d0'
+          }}>
+            🎉 No urgent restocking needed for the next 2 weeks
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
-export default ManagerForecasts;
 
-function MiniLine({ data }) {
-  if (!data.length) return null;
-  const max = Math.max(...data);
+// Helper Components
+function StatusBadge({ status, daysLeft }) {
+  if (status === 'out_of_stock') {
+    return (
+      <span style={{
+        background: '#fef2f2',
+        color: '#ef4444',
+        padding: '.25rem .5rem',
+        fontSize: '.75rem',
+        fontWeight: 600,
+        borderRadius: '12px',
+        textTransform: 'uppercase',
+        letterSpacing: '.3px'
+      }}>
+        Out of Stock
+      </span>
+    );
+  }
+  
+  if (daysLeft <= 7) {
+    return (
+      <span style={{
+        background: '#fef2f2',
+        color: '#ef4444',
+        padding: '.25rem .5rem',
+        fontSize: '.75rem',
+        fontWeight: 600,
+        borderRadius: '12px',
+        textTransform: 'uppercase',
+        letterSpacing: '.3px'
+      }}>
+        Critical
+      </span>
+    );
+  }
+  
+  if (daysLeft <= 14) {
+    return (
+      <span style={{
+        background: '#fef9c3',
+        color: '#f59e0b',
+        padding: '.25rem .5rem',
+        fontSize: '.75rem',
+        fontWeight: 600,
+        borderRadius: '12px',
+        textTransform: 'uppercase',
+        letterSpacing: '.3px'
+      }}>
+        Warning
+      </span>
+    );
+  }
+  
   return (
-    <svg width="120" height="40">
-      {data.map((v,i) => {
-        if (i === 0) return null;
-        const x1 = ((i-1)/(data.length-1))*120;
-        const x2 = (i/(data.length-1))*120;
-        const y1 = 40 - (data[i-1]/max)*35 - 2;
-        const y2 = 40 - (v/max)*35 - 2;
-        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#4b82f7" strokeWidth="2"/>;
-      })}
-    </svg>
+    <span style={{
+      background: '#f0fdf4',
+      color: '#10b981',
+      padding: '.25rem .5rem',
+      fontSize: '.75rem',
+      fontWeight: 600,
+      borderRadius: '12px',
+      textTransform: 'uppercase',
+      letterSpacing: '.3px'
+    }}>
+      Healthy
+    </span>
   );
 }
+
+function PriorityBadge({ priority }) {
+  const colors = {
+    critical: { bg: '#fef2f2', color: '#ef4444', text: 'Critical' },
+    high: { bg: '#fef9c3', color: '#f59e0b', text: 'High' },
+    medium: { bg: '#f0fdf4', color: '#10b981', text: 'Medium' }
+  };
+  
+  const style = colors[priority] || colors.medium;
+  
+  return (
+    <span style={{
+      background: style.bg,
+      color: style.color,
+      padding: '.3rem .6rem',
+      fontSize: '.75rem',
+      fontWeight: 600,
+      borderRadius: '12px',
+      textTransform: 'uppercase',
+      letterSpacing: '.3px'
+    }}>
+      {style.text}
+    </span>
+  );
+}
+
+export default ManagerForecasts;

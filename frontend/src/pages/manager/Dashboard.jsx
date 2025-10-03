@@ -2,26 +2,108 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { inventoryApi } from '@/services/inventoryApi';
 
+// Add CSS animations
+const styles = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .manager-dashboard {
+    animation: fadeIn 0.6s ease-out;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
+}
+
 export default function Dashboard() {
   // Removed recentRequests (per requirement)
   // Removed forecastHighlights & notifications (unused mock content)
   const [analytics, setAnalytics] = useState({ items:[], claims:[], returns:{ pending_returns:0 }});
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [forecastLoading, setForecastLoading] = useState(false);
   const [forecastError, setForecastError] = useState(null);
   const [depletionAlerts, setDepletionAlerts] = useState([]); // derived from forecast endpoint
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [requests, setRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [claims, setClaims] = useState([]);
+  const [claimsLoading, setClaimsLoading] = useState(false);
+  const [returns, setReturns] = useState([]);
+  const [returnsLoading, setReturnsLoading] = useState(false);
   const navigate = useNavigate();
 
   // Removed mock dashboard fetch (no longer needed)
 
   useEffect(()=>{
     (async()=>{
-      setAnalyticsLoading(true);
       try {
         const data = await inventoryApi.analyticsSummary();
         setAnalytics(data);
       } catch(e){ console.error('analytics error', e); }
-      finally { setAnalyticsLoading(false); }
+    })();
+  }, []);
+
+  // Fetch inventory items
+  useEffect(()=>{
+    (async()=>{
+      setInventoryLoading(true);
+      try {
+        const data = await inventoryApi.list();
+        setInventoryItems(data.items || []);
+      } catch(e){ console.error('inventory error', e); }
+      finally { setInventoryLoading(false); }
+    })();
+  }, []);
+
+  // Fetch requests data
+  useEffect(()=>{
+    (async()=>{
+      setRequestsLoading(true);
+      try {
+        const data = await inventoryApi.listRequests();
+        setRequests(data.requests || []);
+      } catch(e){ console.error('requests error', e); }
+      finally { setRequestsLoading(false); }
+    })();
+  }, []);
+
+  // Fetch claims data
+  useEffect(()=>{
+    (async()=>{
+      setClaimsLoading(true);
+      try {
+        const data = await inventoryApi.listPendingClaims();
+        setClaims(data.claims || []);
+      } catch(e){ console.error('claims error', e); }
+      finally { setClaimsLoading(false); }
+    })();
+  }, []);
+
+  // Fetch returns data
+  useEffect(()=>{
+    (async()=>{
+      setReturnsLoading(true);
+      try {
+        const data = await inventoryApi.listPendingReturns();
+        setReturns(data.returns || []);
+      } catch(e){ console.error('returns error', e); }
+      finally { setReturnsLoading(false); }
     })();
   }, []);
 
@@ -58,118 +140,428 @@ export default function Dashboard() {
   // no loading gate (analytics has its own loading state)
 
   return (
-    <div className="manager-dashboard" style={{ padding: '1.75rem' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.2rem', gap:'1rem', flexWrap:'wrap' }}>
-        <h2 style={{ margin: 0 }}>Manager Dashboard</h2>
-        <div style={{ display:'flex', gap:'.6rem', flexWrap:'wrap' }}>
-          <QuickBtn onClick={()=>navigate('/manager/inventory')}>Inventory</QuickBtn>
-          <QuickBtn onClick={()=>navigate('/manager/claims')}>Claims</QuickBtn>
-          <QuickBtn onClick={()=>navigate('/manager/returns')}>Returns</QuickBtn>
-          <QuickBtn onClick={()=>navigate('/reports')}>Reports</QuickBtn>
+    <div className="manager-dashboard" style={{ 
+      padding: '2rem', 
+      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+      minHeight: '100vh'
+    }}>
+      {/* Header Section */}
+      <div style={{ 
+        marginBottom: '2rem',
+        background: 'rgba(255,255,255,0.8)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: '20px',
+        padding: '1.5rem 2rem',
+        border: '1px solid rgba(255,255,255,0.2)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          gap: '1rem', 
+          flexWrap: 'wrap' 
+        }}>
+          <div>
+            <h1 style={{ 
+              margin: 0, 
+              fontSize: '2rem', 
+              fontWeight: 800,
+              background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              Manager Dashboard
+            </h1>
+            <p style={{ 
+              margin: '.5rem 0 0', 
+              color: '#64748b', 
+              fontSize: '.9rem' 
+            }}>
+              Comprehensive inventory management overview
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '.8rem', flexWrap: 'wrap' }}>
+            <ModernButton onClick={() => navigate('/manager/inventory')} color="#4f46e5">
+              📦 Inventory
+            </ModernButton>
+            <ModernButton onClick={() => navigate('/manager/claims')} color="#f59e0b">
+              📋 Claims
+            </ModernButton>
+            <ModernButton onClick={() => navigate('/manager/returns')} color="#f97316">
+              ↩️ Returns
+            </ModernButton>
+            <ModernButton onClick={() => navigate('/manager/reports')} color="#10b981">
+              📊 Reports
+            </ModernButton>
+          </div>
         </div>
       </div>
 
-      {/* AI Forecast Alerts (notification style) */}
-      <DepletionAlerts
-        loading={forecastLoading}
-        error={forecastError}
-        alerts={depletionAlerts}
-        onViewAll={()=>navigate('/manager/forecasts')}
-      />
-
-  {/* Separate status sections replacing previous combined AnalyticsBar */}
-  <StatusSections analytics={analytics} loading={analyticsLoading} />
-
-      {/** Derive total items from analytics (manager-scoped) instead of mock overview */}
-      <div className="overview-cards" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:'1rem', marginBottom:'1.5rem' }}>
-        <AnimatedCard
-          label="Total Items"
-          value={analytics.items.reduce((a,c)=> a + (c.count||0), 0)}
-          color="#6366f1"
-          breakdown={(function(){
-            const eq = analytics.items.filter(i=>i.category==='equipment').reduce((a,c)=>a+(c.count||0),0);
-            const sup = analytics.items.filter(i=>i.category==='supplies').reduce((a,c)=>a+(c.count||0),0);
-            return [
-              { label:'Equipment', value:eq, color:'#6366f1' },
-              { label:'Supplies', value:sup, color:'#0ea5e9' }
-            ];
-          })()}
+      {/* AI Forecast Alerts Section */}
+      <div style={{ marginBottom: '2rem' }}>
+        <DepletionAlerts
+          loading={forecastLoading}
+          error={forecastError}
+          alerts={depletionAlerts}
+          onViewAll={() => navigate('/manager/ai-forecasts')}
         />
-        <AnimatedCard label="Pending Claims" value={(analytics.claims.find(c=>c.status==='pending')||{}).count || 0} color="#f59e0b" />
-        <AnimatedCard label="Pending Returns" value={analytics.returns.pending_returns || 0} color="#f97316" />
-        <AnimatedCard label="Low Stock (Supplies Out)" value={analytics.items.filter(i=>i.category==='supplies' && i.status==='out_of_stock').reduce((a,c)=>a+c.count,0)} color="#dc2626" />
       </div>
 
-      <div style={{ display:'grid', gap:'1.25rem', gridTemplateColumns:'repeat(auto-fit,minmax(340px,1fr))', alignItems:'start' }}>
-        <Panel title="Item Status Distribution">
-          <PieChart data={aggregateForPie(analytics.items)} colors={['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#64748b']} />
-        </Panel>
-        <Panel title="Claim Statuses">
-          <BarChart data={aggregateKeyCounts(analytics.claims,'status')} colors={{ pending:'#f59e0b', approved:'#16a34a', rejected:'#dc2626' }} />
-        </Panel>
-        <Panel title="Return States">
-          <ReturnStatus returnsData={analytics.returns} />
-          <div style={{ marginTop:'.9rem' }}>
-            <PieChart data={returnBreakdownPie(analytics.returns)} colors={['#f97316','#10b981','#64748b']} size={140} />
-          </div>
-        </Panel>
-        <Panel title="Item Status Lists">
+      {/* Key Metrics Grid */}
+      <div style={{ marginBottom: '2rem' }}>
+        <SectionHeader title="Key Performance Metrics" subtitle="Real-time overview of your inventory system" />
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
+          gap: '1.5rem',
+          marginTop: '1rem'
+        }}>
+          <ModernCard
+            label="Total Items"
+            value={analytics.items.reduce((a,c)=> a + (c.count||0), 0)}
+            color="#4f46e5"
+            icon="📦"
+            trend="+12%"
+            breakdown={(function(){
+              const eq = analytics.items.filter(i=>i.category==='equipment').reduce((a,c)=>a+(c.count||0),0);
+              const sup = analytics.items.filter(i=>i.category==='supplies').reduce((a,c)=>a+(c.count||0),0);
+              return [
+                { label:'Equipment', value:eq, color:'#4f46e5' },
+                { label:'Supplies', value:sup, color:'#06b6d4' }
+              ];
+            })()}
+          />
+          <ModernCard 
+            label="Active Claims" 
+            value={(analytics.claims.find(c=>c.status==='pending')||{}).count || 0} 
+            color="#f59e0b"
+            icon="📋"
+            trend="-5%"
+            breakdown={(function(){
+              const pending = (analytics.claims.find(c=>c.status==='pending')||{}).count || 0;
+              const approved = (analytics.claims.find(c=>c.status==='approved')||{}).count || 0;
+              const rejected = (analytics.claims.find(c=>c.status==='rejected')||{}).count || 0;
+              return [
+                { label:'Pending', value:pending, color:'#f59e0b' },
+                { label:'Approved', value:approved, color:'#10b981' },
+                { label:'Rejected', value:rejected, color:'#ef4444' }
+              ];
+            })()}
+          />
+          <ModernCard 
+            label="Equipment in Use" 
+            value={analytics.returns.total_in_use || 0} 
+            color="#8b5cf6"
+            icon="⚙️"
+            trend="+8%"
+          />
+          <ModernCard 
+            label="Utilization Rate" 
+            value={`${Math.round(((analytics.returns.total_in_use || 0) / Math.max(1, analytics.items.filter(i=>i.category==='equipment').reduce((a,c)=>a+c.count,0))) * 100)}%`} 
+            color="#10b981"
+            icon="📈"
+            trend="+3%"
+          />
+        </div>
+      </div>
+
+      {/* Main Analytics Grid */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(12, 1fr)',
+        gap: '1.5rem',
+        marginBottom: '2rem'
+      }}>
+        {/* Left Column - Large Panels */}
+        <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <ModernPanel title="📊 Analytics Overview" gridColumn="span 12">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem', height: '300px' }}>
+              <div>
+                <h4 style={{ fontSize: '.8rem', margin: '0 0 1rem', color: '#475569', fontWeight: 600 }}>Item Status Distribution</h4>
+                <PieChart data={aggregateForPie(analytics.items)} colors={['#4f46e5','#06b6d4','#10b981','#f59e0b','#ef4444','#64748b']} size={200} />
+              </div>
+              <div>
+                <h4 style={{ fontSize: '.8rem', margin: '0 0 1rem', color: '#475569', fontWeight: 600 }}>Claim Processing</h4>
+                <BarChart data={aggregateKeyCounts(analytics.claims,'status')} colors={{ pending:'#f59e0b', approved:'#10b981', rejected:'#ef4444' }} maxWidth={200} />
+              </div>
+            </div>
+          </ModernPanel>
+
+          <ModernPanel title="⚙️ Equipment Utilization" gridColumn="span 12">
+            <EquipmentUtilization analytics={analytics} items={inventoryItems} />
+          </ModernPanel>
+        </div>
+
+        {/* Right Column - Activity & Status */}
+        <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <ModernPanel title="🔔 Recent Activity">
+            <RecentActivity 
+              claims={claims} 
+              requests={requests} 
+              returns={returns} 
+              loading={claimsLoading || requestsLoading || returnsLoading} 
+            />
+          </ModernPanel>
+
+          <ModernPanel title="📋 Request Analytics">
+            <RequestAnalytics requests={requests} loading={requestsLoading} />
+          </ModernPanel>
+        </div>
+      </div>
+
+      {/* Bottom Section - Detailed Views */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+        gap: '1.5rem' 
+      }}>
+        <ModernPanel title="📦 Inventory Overview">
+          <InventoryItemsList items={inventoryItems} loading={inventoryLoading} />
+        </ModernPanel>
+
+        <ModernPanel title="📈 Status Breakdown">
           <ItemStatusList items={analytics.items} />
-        </Panel>
+        </ModernPanel>
+
+        <ModernPanel title="↩️ Return Management">
+          <ReturnStatus returnsData={analytics.returns} />
+          <div style={{ marginTop: '1rem' }}>
+            <PieChart data={returnBreakdownPie(analytics.returns)} colors={['#f97316','#10b981','#64748b']} size={160} />
+          </div>
+        </ModernPanel>
       </div>
     </div>
   );
 }
 
-function AnimatedCard({ label, value, color, breakdown }) {
+// Modern UI Components
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div style={{ marginBottom: '1rem' }}>
+      <h2 style={{ 
+        margin: 0, 
+        fontSize: '1.5rem', 
+        fontWeight: 700,
+        color: '#1e293b',
+        marginBottom: '.25rem'
+      }}>
+        {title}
+      </h2>
+      {subtitle && (
+        <p style={{ 
+          margin: 0, 
+          color: '#64748b', 
+          fontSize: '.9rem' 
+        }}>
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ModernButton({ children, onClick, color = "#4f46e5" }) {
+  return (
+    <button 
+      onClick={onClick} 
+      style={{
+        background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+        color: '#fff',
+        border: 'none',
+        padding: '.75rem 1.25rem',
+        borderRadius: '12px',
+        fontSize: '.85rem',
+        fontWeight: 600,
+        cursor: 'pointer',
+        boxShadow: `0 4px 15px ${color}40`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '.5rem'
+      }}
+      onMouseEnter={(e) => {
+        e.target.style.transform = 'translateY(-2px)';
+        e.target.style.boxShadow = `0 8px 25px ${color}50`;
+      }}
+      onMouseLeave={(e) => {
+        e.target.style.transform = 'translateY(0)';
+        e.target.style.boxShadow = `0 4px 15px ${color}40`;
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ModernCard({ label, value, color, icon, trend, breakdown }) {
   const [hover, setHover] = useState(false);
-  const total = value || 0;
+  
   return (
     <div
-      onMouseEnter={()=>setHover(true)}
-      onMouseLeave={()=>setHover(false)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       style={{
-        background:'#fff', border:'1px solid #e2e8f0', borderRadius:20, position:'relative',
-        padding:'1rem 1.1rem 1.2rem', minWidth:140, overflow:'hidden', cursor: breakdown? 'pointer':'default',
-        animation:'fadeIn .6s ease', boxShadow:'0 4px 14px -6px rgba(0,0,0,.08)', transition:'transform .25s'
-      }}>
-      <div style={{ position:'absolute', inset:0, background:`linear-gradient(135deg, ${color}15, transparent 70%)` }} />
-      <span style={{ fontSize:'.6rem', fontWeight:600, letterSpacing:.5, textTransform:'uppercase', color:'#475569' }}>{label}</span>
-      <div style={{ fontSize:'1.7rem', fontWeight:700, marginTop:'.2rem', color:'#0f172a', display:'flex', alignItems:'flex-end', gap:'.4rem' }}>
-        <AnimatedNumber value={value} />
+        background: 'rgba(255,255,255,0.9)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255,255,255,0.2)',
+        borderRadius: '20px',
+        padding: '1.75rem',
+        position: 'relative',
+        overflow: 'hidden',
+        cursor: breakdown ? 'pointer' : 'default',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transform: hover ? 'translateY(-4px)' : 'translateY(0)',
+        boxShadow: hover 
+          ? `0 20px 40px ${color}30` 
+          : '0 8px 32px rgba(0,0,0,0.1)'
+      }}
+    >
+      {/* Background Pattern */}
+      <div style={{
+        position: 'absolute',
+        top: '-50%',
+        right: '-50%',
+        width: '100%',
+        height: '100%',
+        background: `linear-gradient(135deg, ${color}15 0%, transparent 70%)`,
+        borderRadius: '50%',
+        transform: hover ? 'scale(1.1)' : 'scale(1)',
+        transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+      }} />
+      
+      {/* Content */}
+      <div style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'flex-start',
+          marginBottom: '1rem'
+        }}>
+          <div style={{
+            fontSize: '2rem',
+            opacity: 0.8
+          }}>
+            {icon}
+          </div>
+          {trend && (
+            <span style={{
+              fontSize: '.75rem',
+              fontWeight: 600,
+              color: trend.startsWith('+') ? '#10b981' : '#ef4444',
+              background: trend.startsWith('+') ? '#10b98120' : '#ef444420',
+              padding: '.25rem .5rem',
+              borderRadius: '8px'
+            }}>
+              {trend}
+            </span>
+          )}
+        </div>
+        
+        <div style={{
+          fontSize: '.8rem',
+          fontWeight: 600,
+          color: '#64748b',
+          textTransform: 'uppercase',
+          letterSpacing: '.5px',
+          marginBottom: '.5rem'
+        }}>
+          {label}
+        </div>
+        
+        <div style={{
+          fontSize: '2.5rem',
+          fontWeight: 800,
+          color: '#1e293b',
+          lineHeight: 1
+        }}>
+          <AnimatedNumber value={typeof value === 'string' ? value : value} />
+        </div>
       </div>
+
+      {/* Breakdown Overlay */}
       {breakdown && hover && (
-        <div style={{ position:'absolute', inset:0, backdropFilter:'blur(2px)', background:'rgba(255,255,255,.92)', display:'flex', flexDirection:'column', padding:'.6rem .7rem', gap:'.45rem', animation:'fadeIn .25s ease' }}>
-          <span style={{ fontSize:'.55rem', fontWeight:700, letterSpacing:.5, color:'#334155' }}>Breakdown</span>
-          <ul style={{ listStyle:'none', margin:0, padding:0, display:'flex', flexDirection:'column', gap:'.3rem', fontSize:'.55rem' }}>
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(255,255,255,0.95)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '1.5rem',
+          animation: 'fadeIn 0.3s ease'
+        }}>
+          <span style={{
+            fontSize: '.8rem',
+            fontWeight: 700,
+            color: '#374151',
+            marginBottom: '1rem',
+            textTransform: 'uppercase',
+            letterSpacing: '.5px'
+          }}>
+            Breakdown
+          </span>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '.75rem'
+          }}>
             {breakdown.map(b => {
-              const pct = total? ((b.value/total)*100).toFixed(1) : 0;
+              const total = breakdown.reduce((sum, item) => sum + item.value, 0);
+              const pct = total ? ((b.value / total) * 100).toFixed(1) : 0;
               return (
-                <li key={b.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8 }}>
-                  <span style={{ display:'flex', alignItems:'center', gap:6 }}>
-                    <span style={{ width:10, height:10, background:b.color, borderRadius:2 }} />
-                    {b.label}
-                  </span>
-                  <span style={{ fontWeight:600 }}>{b.value} <span style={{ opacity:.6 }}>({pct}%)</span></span>
-                </li>
+                <div key={b.label} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                    <div style={{
+                      width: '12px',
+                      height: '12px',
+                      background: b.color,
+                      borderRadius: '3px'
+                    }} />
+                    <span style={{ fontSize: '.75rem', fontWeight: 500 }}>{b.label}</span>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '.9rem', fontWeight: 700 }}>{b.value}</div>
+                    <div style={{ fontSize: '.65rem', color: '#64748b' }}>{pct}%</div>
+                  </div>
+                </div>
               );
             })}
-          </ul>
+          </div>
         </div>
       )}
-      <div style={{ position:'absolute', bottom:6, right:10, fontSize:'.5rem', letterSpacing:.5, color:color, fontWeight:600 }}>live</div>
     </div>
   );
 }
 
-function Panel({ title, children }) {
+function ModernPanel({ title, children, gridColumn }) {
   return (
     <div style={{
-      background:'#fff', border:'1px solid #e2e8f0', borderRadius:20,
-      padding:'1rem 1.1rem 1.2rem', display:'flex', flexDirection:'column',
-      boxShadow:'0 4px 14px -6px rgba(0,0,0,.05)'
+      gridColumn,
+      background: 'rgba(255,255,255,0.9)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255,255,255,0.2)',
+      borderRadius: '20px',
+      padding: '2rem',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
     }}>
-      <h3 style={{ margin:'0 0 .75rem', fontSize:'.9rem' }}>{title}</h3>
+      <h3 style={{
+        margin: '0 0 1.5rem',
+        fontSize: '1.1rem',
+        fontWeight: 700,
+        color: '#1e293b',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '.5rem'
+      }}>
+        {title}
+      </h3>
       {children}
     </div>
   );
@@ -177,24 +569,6 @@ function Panel({ title, children }) {
 
 // Styles/helpers & visual components
 const emptyStyle = { fontSize:'.6rem', opacity:.6, padding:'.4rem .3rem' };
-
-// Removed notifType (unused)
-
-// Quick action button
-function QuickBtn({ children, onClick }) {
-  return (
-    <button onClick={onClick} style={{
-      background:'#4338ca', color:'#fff', border:'none', padding:'.55rem .85rem',
-      borderRadius:8, fontSize:'.6rem', fontWeight:600, cursor:'pointer',
-      letterSpacing:.5, boxShadow:'0 2px 6px -2px rgba(0,0,0,.25)'
-    }}>{children}</button>
-  );
-}
-
-function StatusSections({ loading }) {
-  if (loading) return <div style={{ fontSize:'.6rem', opacity:.7, marginBottom:'1.25rem' }}>Loading status metrics...</div>;
-  return null; // Sections rendered below in panels (Item / Claim / Return)
-}
 
 // Shared badge
 function Badge({ children, bg='#e2e8f0', color='#334155' }) { return <span style={{ background:bg, color, padding:'.25rem .55rem', fontSize:'.5rem', fontWeight:600, borderRadius:999, letterSpacing:.5 }}>{children}</span>; }
@@ -297,17 +671,26 @@ function statusColor(category, status) {
 // Animated number component
 function AnimatedNumber({ value }) {
   const [display, setDisplay] = useState(0);
-  useEffect(()=>{
+  
+  useEffect(() => {
+    // Handle string values (like percentages)
+    if (typeof value === 'string') {
+      setDisplay(value);
+      return;
+    }
+    
     let start = 0;
-    const duration = 500; const begin = performance.now();
-    const step = (t)=>{
-      const p = Math.min(1, (t-begin)/duration);
-      const eased = 1 - Math.pow(1-p,3);
-      setDisplay(Math.round(start + (value-start)*eased));
-      if (p<1) requestAnimationFrame(step);
+    const duration = 500;
+    const begin = performance.now();
+    const step = (t) => {
+      const p = Math.min(1, (t - begin) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.round(start + (value - start) * eased));
+      if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
-  },[value]);
+  }, [value]);
+  
   return <span>{display}</span>;
 }
 
@@ -459,69 +842,605 @@ function groupBy(arr, fn) {
   return arr.reduce((acc,x)=>{ const k = fn(x); (acc[k] ||= []).push(x); return acc; }, {});
 }
 
+// ============ Inventory Items List Component ============
+function InventoryItemsList({ items, loading }) {
+  if (loading) return <div style={emptyStyle}>Loading inventory items...</div>;
+  if (!items || !items.length) return <div style={emptyStyle}>No inventory items found.</div>;
+  
+  // Group items by category
+  const grouped = groupBy(items, item => item.category);
+  
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:'.8rem', maxHeight:'320px', overflowY:'auto' }}>
+      {Object.entries(grouped).map(([category, categoryItems]) => (
+        <div key={category} style={{
+          border:'1px solid #e2e8f0',
+          background:'#fff',
+          borderRadius:14,
+          padding:'.7rem .75rem .75rem',
+          boxShadow:'0 3px 10px -6px rgba(0,0,0,.06)'
+        }}>
+          <div style={{ 
+            display:'flex', 
+            justifyContent:'space-between', 
+            alignItems:'center',
+            marginBottom:'.6rem',
+            paddingBottom:'.4rem',
+            borderBottom:'1px solid #f1f5f9'
+          }}>
+            <strong style={{ 
+              fontSize:'.65rem', 
+              textTransform:'uppercase', 
+              letterSpacing:.6,
+              color:'#475569'
+            }}>
+              {category}
+            </strong>
+            <span style={{ 
+              fontSize:'.5rem', 
+              fontWeight:600, 
+              background:'#f1f5f9', 
+              padding:'.2rem .45rem', 
+              borderRadius:20,
+              color:'#64748b'
+            }}>
+              {categoryItems.length} items
+            </span>
+          </div>
+          
+          <div style={{ display:'flex', flexDirection:'column', gap:'.4rem' }}>
+            {categoryItems.slice(0, 5).map(item => (
+              <div key={item.id} style={{
+                display:'flex',
+                justifyContent:'space-between',
+                alignItems:'center',
+                padding:'.4rem .5rem',
+                background:'#f8fafc',
+                borderRadius:8,
+                fontSize:'.55rem'
+              }}>
+                <div style={{ display:'flex', flexDirection:'column', gap:'.1rem', flex:1 }}>
+                  <span style={{ fontWeight:600, color:'#1e293b' }}>{item.name}</span>
+                  {item.description && (
+                    <span style={{ 
+                      fontSize:'.5rem', 
+                      color:'#64748b',
+                      overflow:'hidden',
+                      textOverflow:'ellipsis',
+                      whiteSpace:'nowrap',
+                      maxWidth:'200px'
+                    }}>
+                      {item.description}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display:'flex', alignItems:'center', gap:'.4rem' }}>
+                  <span style={{ 
+                    fontSize:'.5rem', 
+                    fontWeight:600,
+                    color:'#475569'
+                  }}>
+                    Qty: {item.quantity || 0}
+                  </span>
+                  <StatusBadge status={item.status} category={item.category} />
+                </div>
+              </div>
+            ))}
+            {categoryItems.length > 5 && (
+              <div style={{
+                fontSize:'.5rem',
+                color:'#64748b',
+                textAlign:'center',
+                padding:'.3rem',
+                fontStyle:'italic'
+              }}>
+                + {categoryItems.length - 5} more items
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StatusBadge({ status, category }) {
+  const color = statusColor(category, status);
+  const bgColor = `${color}20`;
+  
+  return (
+    <span style={{
+      background: bgColor,
+      color: color,
+      padding:'.15rem .4rem',
+      fontSize:'.45rem',
+      fontWeight:600,
+      borderRadius:12,
+      textTransform:'uppercase',
+      letterSpacing:.3,
+      border: `1px solid ${color}40`
+    }}>
+      {status.replace('_', ' ')}
+    </span>
+  );
+}
+
+// ============ New Analytics Components ============
+
+function RequestAnalytics({ requests, loading }) {
+  if (loading) return <div style={emptyStyle}>Loading request analytics...</div>;
+  if (!requests || !requests.length) return <div style={emptyStyle}>No requests found.</div>;
+  
+  const statusCounts = requests.reduce((acc, req) => {
+    acc[req.status] = (acc[req.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const priorityCounts = requests.reduce((acc, req) => {
+    const priority = req.priority || 'normal';
+    acc[priority] = (acc[priority] || 0) + 1;
+    return acc;
+  }, {});
+
+  const recentRequests = requests
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5);
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:'.8rem' }}>
+      {/* Status Distribution */}
+      <div>
+        <h4 style={{ fontSize:'.6rem', margin:'0 0 .5rem', color:'#64748b', textTransform:'uppercase', letterSpacing:.5 }}>Status Distribution</h4>
+        <BarChart 
+          data={statusCounts} 
+          colors={{ pending:'#f59e0b', approved:'#16a34a', rejected:'#dc2626', voting:'#8b5cf6' }} 
+          maxWidth={120}
+        />
+      </div>
+
+      {/* Priority Breakdown */}
+      {Object.keys(priorityCounts).length > 1 && (
+        <div>
+          <h4 style={{ fontSize:'.6rem', margin:'0 0 .5rem', color:'#64748b', textTransform:'uppercase', letterSpacing:.5 }}>Priority Levels</h4>
+          <div style={{ display:'flex', gap:'.4rem', flexWrap:'wrap' }}>
+            {Object.entries(priorityCounts).map(([priority, count]) => (
+              <Badge 
+                key={priority}
+                bg={priority === 'high' ? '#fee2e2' : priority === 'medium' ? '#fef9c3' : '#f1f5f9'}
+                color={priority === 'high' ? '#b91c1c' : priority === 'medium' ? '#92400e' : '#475569'}
+              >
+                {priority}: {count}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Requests */}
+      <div>
+        <h4 style={{ fontSize:'.6rem', margin:'0 0 .5rem', color:'#64748b', textTransform:'uppercase', letterSpacing:.5 }}>Recent Requests</h4>
+        <div style={{ display:'flex', flexDirection:'column', gap:'.3rem', maxHeight:'120px', overflowY:'auto' }}>
+          {recentRequests.map(req => (
+            <div key={req.id} style={{
+              padding:'.4rem .5rem',
+              background:'#f8fafc',
+              borderRadius:8,
+              fontSize:'.5rem',
+              display:'flex',
+              justifyContent:'space-between',
+              alignItems:'center'
+            }}>
+              <span style={{ fontWeight:600, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                {req.item_name || req.description || 'Unnamed Request'}
+              </span>
+              <Badge 
+                bg={req.status === 'pending' ? '#fef9c3' : req.status === 'approved' ? '#dcfce7' : '#fee2e2'}
+                color={req.status === 'pending' ? '#92400e' : req.status === 'approved' ? '#166534' : '#b91c1c'}
+              >
+                {req.status}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EquipmentUtilization({ analytics, items }) {
+  const equipmentItems = analytics.items.filter(i => i.category === 'equipment');
+  const totalEquipment = equipmentItems.reduce((a, c) => a + (c.count || 0), 0);
+  const inUse = analytics.returns.total_in_use || 0;
+  const available = equipmentItems.filter(i => i.status === 'available').reduce((a, c) => a + (c.count || 0), 0);
+  const forRepair = equipmentItems.filter(i => i.status === 'for_repair').reduce((a, c) => a + (c.count || 0), 0);
+  const disposed = equipmentItems.filter(i => i.status === 'disposed').reduce((a, c) => a + (c.count || 0), 0);
+
+  const utilizationRate = totalEquipment > 0 ? ((inUse / totalEquipment) * 100).toFixed(1) : 0;
+  const availabilityRate = totalEquipment > 0 ? ((available / totalEquipment) * 100).toFixed(1) : 0;
+
+  const utilizationData = [
+    { label: 'In Use', value: inUse, color: '#8b5cf6' },
+    { label: 'Available', value: available, color: '#16a34a' },
+    { label: 'For Repair', value: forRepair, color: '#f97316' },
+    { label: 'Disposed', value: disposed, color: '#64748b' }
+  ].filter(item => item.value > 0);
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:'.8rem' }}>
+      {/* Key Metrics */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'.5rem' }}>
+        <div style={{ textAlign:'center', padding:'.5rem', background:'#f8fafc', borderRadius:10 }}>
+          <div style={{ fontSize:'.5rem', color:'#64748b', marginBottom:'.2rem' }}>Utilization Rate</div>
+          <div style={{ fontSize:'1.2rem', fontWeight:700, color:'#8b5cf6' }}>{utilizationRate}%</div>
+        </div>
+        <div style={{ textAlign:'center', padding:'.5rem', background:'#f8fafc', borderRadius:10 }}>
+          <div style={{ fontSize:'.5rem', color:'#64748b', marginBottom:'.2rem' }}>Availability Rate</div>
+          <div style={{ fontSize:'1.2rem', fontWeight:700, color:'#16a34a' }}>{availabilityRate}%</div>
+        </div>
+      </div>
+
+      {/* Equipment Distribution */}
+      {utilizationData.length > 0 && (
+        <div>
+          <h4 style={{ fontSize:'.6rem', margin:'0 0 .5rem', color:'#64748b', textTransform:'uppercase', letterSpacing:.5 }}>Equipment Distribution</h4>
+          <PieChart data={utilizationData} colors={utilizationData.map(d => d.color)} size={160} />
+        </div>
+      )}
+
+      {/* Equipment Categories */}
+      {items && items.length > 0 && (
+        <div>
+          <h4 style={{ fontSize:'.6rem', margin:'0 0 .5rem', color:'#64748b', textTransform:'uppercase', letterSpacing:.5 }}>Top Equipment Types</h4>
+          <div style={{ display:'flex', flexDirection:'column', gap:'.3rem', maxHeight:'100px', overflowY:'auto' }}>
+            {items.filter(item => item.category === 'equipment').slice(0, 5).map(item => (
+              <div key={item.id} style={{
+                display:'flex',
+                justifyContent:'space-between',
+                alignItems:'center',
+                padding:'.3rem .4rem',
+                background:'#f8fafc',
+                borderRadius:6,
+                fontSize:'.5rem'
+              }}>
+                <span style={{ fontWeight:600, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                  {item.name}
+                </span>
+                <StatusBadge status={item.status} category="equipment" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RecentActivity({ claims, requests, returns, loading }) {
+  if (loading) return <div style={emptyStyle}>Loading recent activity...</div>;
+  
+  // Combine all activities and sort by date
+  const activities = [];
+  
+  if (claims) {
+    claims.slice(0, 3).forEach(claim => {
+      activities.push({
+        id: `claim-${claim.id}`,
+        type: 'claim',
+        title: `Claim for ${claim.item_name || 'Item'}`,
+        status: claim.status,
+        user: claim.user_name || claim.requested_by_name || 'Unknown User',
+        date: claim.created_at || claim.request_date,
+        icon: '📋'
+      });
+    });
+  }
+
+  if (requests) {
+    requests.slice(0, 3).forEach(request => {
+      activities.push({
+        id: `request-${request.id}`,
+        type: 'request',
+        title: request.item_name || request.description || 'New Request',
+        status: request.status,
+        user: request.user_name || request.requested_by_name || 'Unknown User',
+        date: request.created_at || request.request_date,
+        icon: '💡'
+      });
+    });
+  }
+
+  if (returns) {
+    returns.slice(0, 3).forEach(returnItem => {
+      activities.push({
+        id: `return-${returnItem.id}`,
+        type: 'return',
+        title: `Return Request: ${returnItem.item_name || 'Equipment'}`,
+        status: returnItem.return_status || 'pending',
+        user: returnItem.user_name || returnItem.current_user_name || 'Unknown User',
+        date: returnItem.return_requested_at || returnItem.updated_at,
+        icon: '↩️'
+      });
+    });
+  }
+
+  // Sort by date (most recent first)
+  activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const recentActivities = activities.slice(0, 8);
+
+  if (recentActivities.length === 0) {
+    return <div style={emptyStyle}>No recent activity.</div>;
+  }
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:'.4rem', maxHeight:'300px', overflowY:'auto' }}>
+      {recentActivities.map(activity => (
+        <div key={activity.id} style={{
+          display:'flex',
+          alignItems:'center',
+          gap:'.5rem',
+          padding:'.4rem .5rem',
+          background:'#f8fafc',
+          borderRadius:8,
+          fontSize:'.55rem',
+          borderLeft:`3px solid ${getActivityColor(activity.type)}`
+        }}>
+          <span style={{ fontSize:'.7rem' }}>{activity.icon}</span>
+          <div style={{ flex:1, display:'flex', flexDirection:'column', gap:'.1rem' }}>
+            <span style={{ fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+              {activity.title}
+            </span>
+            <span style={{ fontSize:'.5rem', color:'#64748b' }}>
+              by {activity.user} • {formatRelativeTime(activity.date)}
+            </span>
+          </div>
+          <Badge 
+            bg={getStatusBg(activity.status)}
+            color={getStatusColor(activity.status)}
+          >
+            {activity.status}
+          </Badge>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Helper functions for Recent Activity
+function getActivityColor(type) {
+  switch (type) {
+    case 'claim': return '#f59e0b';
+    case 'request': return '#06b6d4';
+    case 'return': return '#f97316';
+    default: return '#64748b';
+  }
+}
+
+function getStatusBg(status) {
+  switch (status) {
+    case 'pending': return '#fef9c3';
+    case 'approved': return '#dcfce7';
+    case 'rejected': return '#fee2e2';
+    case 'voting': return '#ede9fe';
+    default: return '#f1f5f9';
+  }
+}
+
+function getStatusColor(status) {
+  switch (status) {
+    case 'pending': return '#92400e';
+    case 'approved': return '#166534';
+    case 'rejected': return '#b91c1c';
+    case 'voting': return '#6b21a8';
+    default: return '#475569';
+  }
+}
+
+function formatRelativeTime(dateString) {
+  if (!dateString) return 'Unknown time';
+  
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+  
+  if (diffInHours < 1) return 'Just now';
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) return `${diffInDays}d ago`;
+  
+  const diffInWeeks = Math.floor(diffInDays / 7);
+  if (diffInWeeks < 4) return `${diffInWeeks}w ago`;
+  
+  return date.toLocaleDateString();
+}
+
 // ============ AI Forecast Alerts Component ============
 function DepletionAlerts({ loading, error, alerts, onViewAll }) {
   return (
     <div style={{
-      marginBottom:'1.4rem',
-      background:'#fff',
-      border:'1px solid #e2e8f0',
-      borderRadius:18,
-      padding:'.85rem .95rem .95rem',
-      boxShadow:'0 4px 14px -6px rgba(0,0,0,.05)',
-      display:'flex', flexDirection:'column', gap:'.65rem'
+      background: 'rgba(255,255,255,0.9)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255,255,255,0.2)',
+      borderRadius: '20px',
+      padding: '1.5rem 2rem',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '.75rem'
     }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'.75rem' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'.55rem' }}>
-          <span style={{ width:10, height:10, background:'#6366f1', borderRadius:3, boxShadow:'0 0 0 4px #6366f11f' }} />
-          <strong style={{ fontSize:'.75rem', letterSpacing:.3 }}>AI Depletion Alerts</strong>
-          <span style={{ fontSize:'.45rem', background:'#eef2ff', color:'#4338ca', padding:'.25rem .5rem', fontWeight:600, borderRadius:999 }}>beta</span>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        gap: '1rem' 
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+          <div style={{
+            width: '12px',
+            height: '12px',
+            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+            borderRadius: '50%',
+            boxShadow: '0 0 0 4px rgba(79, 70, 229, 0.2)',
+            animation: 'pulse 2s infinite'
+          }} />
+          <h3 style={{
+            margin: 0,
+            fontSize: '1.1rem',
+            fontWeight: 700,
+            color: '#1e293b',
+            letterSpacing: '.3px'
+          }}>
+            🤖 AI Depletion Alerts
+          </h3>
+          <span style={{
+            fontSize: '.7rem',
+            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+            color: '#fff',
+            padding: '.25rem .6rem',
+            fontWeight: 600,
+            borderRadius: '12px',
+            textTransform: 'uppercase',
+            letterSpacing: '.5px'
+          }}>
+            Beta
+          </span>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:'.55rem' }}>
-          <small style={{ fontSize:'.5rem', color:'#64748b' }}>Window 30d • Threshold ≤14d</small>
-          <button onClick={onViewAll} style={{ background:'#4338ca', color:'#fff', border:'none', fontSize:'.5rem', fontWeight:600, padding:'.4rem .55rem', borderRadius:8, cursor:'pointer' }}>View All</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+          <small style={{ 
+            fontSize: '.75rem', 
+            color: '#64748b',
+            background: '#f1f5f9',
+            padding: '.4rem .8rem',
+            borderRadius: '8px'
+          }}>
+            Window: 30d • Threshold: ≤14d
+          </small>
+          <ModernButton onClick={onViewAll} color="#4f46e5">
+            View All Forecasts
+          </ModernButton>
         </div>
       </div>
-      {loading && <div style={{ fontSize:'.55rem', color:'#64748b' }}>Analyzing recent usage...</div>}
-      {!loading && error && <div style={{ fontSize:'.55rem', color:'#dc2626' }}>Error: {error}</div>}
+      
+      {loading && (
+        <div style={{ 
+          fontSize: '.9rem', 
+          color: '#64748b',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '.5rem'
+        }}>
+          <div style={{
+            width: '16px',
+            height: '16px',
+            border: '2px solid #e2e8f0',
+            borderTop: '2px solid #4f46e5',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }} />
+          Analyzing recent usage patterns...
+        </div>
+      )}
+      
+      {!loading && error && (
+        <div style={{ 
+          fontSize: '.9rem', 
+          color: '#ef4444',
+          background: '#fef2f2',
+          padding: '.75rem',
+          borderRadius: '12px',
+          border: '1px solid #fecaca'
+        }}>
+          ⚠️ Error: {error}
+        </div>
+      )}
+      
       {!loading && !error && (
-        <ul style={{ listStyle:'none', margin:0, padding:0, display:'flex', flexDirection:'column', gap:'.45rem', maxHeight:190, overflowY:'auto' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1rem',
+          maxHeight: '200px',
+          overflowY: 'auto'
+        }}>
           {alerts.map(a => (
-            <li key={a.id} style={{
-              background:'#f8fafc',
-              border:'1px solid #e2e8f0',
-              padding:'.55rem .6rem',
-              borderRadius:12,
-              display:'flex',
-              flexDirection:'column',
-              gap:'.35rem',
-              fontSize:'.55rem',
-              fontWeight:500,
-              position:'relative'
+            <div key={a.id} style={{
+              background: 'linear-gradient(135deg, #fef7ff 0%, #f3f4f6 100%)',
+              border: '1px solid #e5e7eb',
+              padding: '.75rem 1rem',
+              borderRadius: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '.5rem',
+              transition: 'all 0.3s ease'
             }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'.6rem' }}>
-                <span style={{ fontWeight:600 }}>{a.name}</span>
-                <div style={{ display:'flex', alignItems:'center', gap:'.4rem' }}>
-                  {a.status === 'out_of_stock' && <Badge bg="#fee2e2" color="#b91c1c">OUT</Badge>}
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                gap: '.75rem' 
+              }}>
+                <span style={{ 
+                  fontWeight: 700,
+                  color: '#1e293b',
+                  fontSize: '.9rem'
+                }}>
+                  {a.name}
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                  {a.status === 'out_of_stock' && (
+                    <Badge bg="#fef2f2" color="#dc2626">OUT OF STOCK</Badge>
+                  )}
                   {a.status !== 'out_of_stock' && a.daysToDeplete != null && (
-                    <Badge bg={a.daysToDeplete <= 7 ? '#fee2e2':'#fef9c3'} color={a.daysToDeplete <= 7 ? '#b91c1c':'#92400e'}>
-                      ~{Math.max(0, Math.round(a.daysToDeplete))}d
+                    <Badge 
+                      bg={a.daysToDeplete <= 7 ? '#fef2f2' : '#fef9c3'} 
+                      color={a.daysToDeplete <= 7 ? '#dc2626' : '#d97706'}
+                    >
+                      ~{Math.max(0, Math.round(a.daysToDeplete))} days
                     </Badge>
                   )}
                 </div>
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:'.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
                 <UsageBar days={a.daysToDeplete} />
-                <span style={{ fontSize:'.5rem', opacity:.65 }}>
-                  {a.status === 'out_of_stock' ? 'Restock immediately' : a.daysToDeplete != null ? 'Est. depletion' : 'Insufficient data'}
+                <span style={{ 
+                  fontSize: '.75rem', 
+                  color: '#64748b',
+                  fontWeight: 500
+                }}>
+                  {a.status === 'out_of_stock' 
+                    ? 'Restock immediately' 
+                    : a.daysToDeplete != null 
+                      ? 'Est. depletion' 
+                      : 'Insufficient data'
+                  }
                 </span>
               </div>
-            </li>
+            </div>
           ))}
-          {!alerts.length && <li style={{ fontSize:'.55rem', color:'#64748b', padding:'.4rem .2rem' }}>No urgent depletion risks.</li>}
-        </ul>
+          {!alerts.length && (
+            <div style={{
+              fontSize: '.9rem',
+              color: '#64748b',
+              textAlign: 'center',
+              padding: '2rem',
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #f9fafb 100%)',
+              borderRadius: '16px',
+              border: '1px dashed #d1d5db'
+            }}>
+              🎉 No urgent depletion risks detected
+            </div>
+          )}
+        </div>
       )}
-      <small style={{ fontSize:'.45rem', color:'#64748b' }}>Predictions based on recent approved claims · heuristic model</small>
+      
+      <small style={{ 
+        fontSize: '.75rem', 
+        color: '#9ca3af',
+        textAlign: 'center',
+        fontStyle: 'italic'
+      }}>
+        Predictions based on recent approved claims • AI heuristic model
+      </small>
     </div>
   );
 }

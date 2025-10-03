@@ -77,15 +77,125 @@ export async function fetchForecastData({ department = 'All' } = {}) {
   };
 }
 
-// REPORTS (placeholder)
-export async function generateReport({ type = 'monthly-inventory', format = 'pdf' } = {}) {
-  console.log('generate report', type, format);
-  return {
-    type,
-    format,
-    generatedAt: new Date().toISOString(),
-    url: '/downloads/mock-report.' + (format === 'excel' ? 'xlsx' : format)
-  };
+// REPORTS (Real data implementation)
+export async function generateReport({ month = '2025-09', scope = 'department' } = {}) {
+  console.log('generate report', month, scope);
+  
+  try {
+    // Import inventoryApi dynamically to avoid circular dependencies
+    const { inventoryApi } = await import('./inventoryApi');
+    
+    // Fetch real data from the backend
+    const [inventoryResponse, analyticsResponse] = await Promise.all([
+      inventoryApi.list(),
+      inventoryApi.analyticsSummary()
+    ]);
+    
+    const items = inventoryResponse.items || [];
+    const analytics = analyticsResponse || { items: [], claims: [], returns: { pending_returns: 0 } };
+    
+    // Filter data based on scope
+    let filteredItems = items;
+    let scopeDescription = 'All Items';
+    
+    if (scope === 'department') {
+      // For now, since we don't have department info in items, we'll show all
+      // In a real implementation, you'd filter by: items.filter(item => item.department === userDepartment)
+      filteredItems = items;
+      scopeDescription = 'Department Items';
+    } else if (scope === 'campus') {
+      // Show all items for campus-wide view
+      filteredItems = items;
+      scopeDescription = 'Campus-wide Items';
+    } else if (scope === 'category') {
+      // Keep all items but we'll show category breakdown
+      filteredItems = items;
+      scopeDescription = 'All Categories';
+    }
+    
+    // Calculate real statistics
+    const totalItems = filteredItems.length;
+    const equipmentItems = filteredItems.filter(item => item.category === 'equipment');
+    const suppliesItems = filteredItems.filter(item => item.category === 'supplies');
+    
+    const equipmentCount = equipmentItems.length;
+    const suppliesCount = suppliesItems.length;
+    
+    // Status calculations
+    const availableItems = filteredItems.filter(item => item.status === 'available').length;
+    const inUseItems = filteredItems.filter(item => item.status === 'in_use').length;
+    const outOfStockItems = filteredItems.filter(item => item.status === 'out_of_stock').length;
+    const forRepairItems = filteredItems.filter(item => item.status === 'for_repair').length;
+    const disposedItems = filteredItems.filter(item => item.status === 'disposed').length;
+    
+    // Additional metrics from analytics if available
+    const pendingClaims = analytics.claims?.find(c => c.status === 'pending')?.count || 0;
+    const approvedClaims = analytics.claims?.find(c => c.status === 'approved')?.count || 0;
+    const rejectedClaims = analytics.claims?.find(c => c.status === 'rejected')?.count || 0;
+    const pendingReturns = analytics.returns?.pending_returns || 0;
+    
+    // Calculate utilization rate
+    const utilizationRate = equipmentCount > 0 ? 
+      ((inUseItems / equipmentCount) * 100).toFixed(1) + '%' : '0%';
+    
+    // Create comprehensive summary with real data
+    const realSummary = {
+      'Total Items': totalItems,
+      'Equipment Count': equipmentCount,
+      'Supplies Count': suppliesCount,
+      'Available Items': availableItems,
+      'In Use Items': inUseItems,
+      'Out of Stock': outOfStockItems,
+      'For Repair': forRepairItems,
+      'Disposed Items': disposedItems,
+      'Equipment Utilization': utilizationRate,
+      'Pending Claims': pendingClaims,
+      'Approved Claims': approvedClaims,
+      'Rejected Claims': rejectedClaims,
+      'Pending Returns': pendingReturns,
+      'Report Period': month,
+      'Scope': scopeDescription,
+      'Data Source': 'Live Database',
+      'Last Updated': new Date().toLocaleString()
+    };
+
+    return {
+      type: 'inventory-analysis',
+      format: 'summary',
+      summary: realSummary,
+      scope: scope,
+      itemsIncluded: totalItems,
+      createdAt: new Date().toISOString(),
+      generatedAt: new Date().toISOString(),
+      dataSource: 'live',
+      url: null // No static file since this is live data
+    };
+    
+  } catch (error) {
+    console.error('Error generating real report:', error);
+    
+    // Fallback to mock data if API fails
+    const fallbackSummary = {
+      'Error': 'Unable to fetch live data',
+      'Fallback Mode': 'Active',
+      'Total Items': 'N/A',
+      'Equipment Count': 'N/A',
+      'Supplies Count': 'N/A',
+      'Status': 'Please check your connection',
+      'Report Period': month,
+      'Scope': scope.charAt(0).toUpperCase() + scope.slice(1)
+    };
+
+    return {
+      type: 'error-report',
+      format: 'summary',
+      summary: fallbackSummary,
+      error: error.message,
+      createdAt: new Date().toISOString(),
+      generatedAt: new Date().toISOString(),
+      dataSource: 'fallback'
+    };
+  }
 }
 
 // AUDIT LOG (mock)

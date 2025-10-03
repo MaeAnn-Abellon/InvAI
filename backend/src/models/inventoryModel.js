@@ -16,6 +16,43 @@ const FIELDS_JOIN = `
   i.updated_at AS "updatedAt"`;
 const HISTORY_FIELDS = `id, item_id AS "itemId", old_status AS "oldStatus", new_status AS "newStatus", changed_by AS "changedBy", changed_at AS "changedAt"`;
 
+// Monthly analytics: aggregate new items and status transitions within a date range
+export async function monthlyInventoryAnalytics(user, { start, end }) {
+  if (!start || !end) throw new Error('Missing date range');
+  // Restrict to manager-owned items if manager
+  const params = [start, end];
+  let idx = 3;
+  let ownerClause = '';
+  if (user && user.role === 'manager') {
+    ownerClause = 'AND i.created_by = $3';
+    params.push(user.id);
+  }
+  // New items created in range
+  const newItemsSql = `SELECT COUNT(*)::int AS count FROM inventory_items i WHERE i.created_at >= $1 AND i.created_at < $2 ${ownerClause}`;
+  // Status history joined to items (to filter by owner if needed)
+  const historySql = `SELECT h.old_status, h.new_status FROM inventory_item_status_history h JOIN inventory_items i ON i.id = h.item_id WHERE h.changed_at >= $1 AND h.changed_at < $2 ${ownerClause}`;
+  const [newItemsRes, historyRes] = await Promise.all([
+    pool.query(newItemsSql, params),
+    pool.query(historySql, params)
+  ]);
+  const history = historyRes.rows || [];
+  const counts = { outOfStockEvents:0, repairsStarted:0, repairsCompleted:0, inUseTransitions:0 };
+  for (const h of history) {
+    const ns = h.new_status;
+    const os = h.old_status;
+    if (ns === 'out_of_stock') counts.outOfStockEvents++;
+    if (ns === 'for_repair') counts.repairsStarted++;
+    if (ns === 'available' && os === 'for_repair') counts.repairsCompleted++;
+    if (ns === 'in_use') counts.inUseTransitions++;
+  }
+  return {
+    range: { start, end },
+    newItems: (newItemsRes.rows[0] || { count:0 }).count,
+    ...counts,
+    statusChanges: history.length
+  };
+}
+
 export async function listItems(filters = {}) {
   const clauses = []; const values = []; let i = 1;
   if (filters.category) { clauses.push(`category = $${i++}`); values.push(filters.category); }
