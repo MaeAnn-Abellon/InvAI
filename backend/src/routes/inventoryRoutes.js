@@ -1,6 +1,6 @@
 import express from 'express';
 import { authRequired, managerOrAdmin } from '../middleware/auth.js';
-import { listItems, listItemsForUser, getItem, getItemForUser, createItem, updateItem, deleteItem, listStatusHistory, createClaim, listClaims, approveClaim, listClaimsPaged, requestEquipmentReturn, approveEquipmentReturn, listUserClaimedEquipment, listPendingReturns, listClaimsByUser, createItemRequest, listItemRequests, decideItemRequest, castVoteOnRequest, listApprovedRequestsForVoting, forecastDepletion, monthlyInventoryAnalytics } from '../models/inventoryModel.js';
+import { listItems, listItemsForUser, getItem, getItemForUser, createItem, updateItem, deleteItem, listStatusHistory, createClaim, listClaims, approveClaim, listClaimsPaged, requestEquipmentReturn, approveEquipmentReturn, listUserClaimedEquipment, listPendingReturns, listClaimsByUser, createItemRequest, listItemRequests, decideItemRequest, castVoteOnRequest, listApprovedRequestsForVoting, forecastDepletion, monthlyInventoryAnalytics, adminInventoryOverview, adminInventoryOptions } from '../models/inventoryModel.js';
 import { pool } from '../db.js';
 
 const router = express.Router();
@@ -104,6 +104,27 @@ router.get('/analytics/monthly', managerOrAdmin, async (req,res) => {
   } catch(e){
     res.status(400).json({ error: e.message || 'Monthly analytics error' });
   }
+});
+
+// =============================
+// Admin Global Inventory Overview
+// =============================
+router.get('/analytics/admin/overview', async (req,res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error:'Forbidden' });
+    const { department, course } = req.query;
+    const data = await adminInventoryOverview({ department, course });
+    res.json({ overview: data });
+  } catch(e){ res.status(400).json({ error:e.message || 'Overview error' }); }
+});
+
+// Distinct department & course options for filters
+router.get('/analytics/admin/options', async (req,res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error:'Forbidden' });
+    const data = await adminInventoryOptions();
+    res.json(data);
+  } catch(e){ res.status(400).json({ error:e.message || 'Options error' }); }
 });
 
 // User: list their claimed (in_use) equipment

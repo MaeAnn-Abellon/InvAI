@@ -27,6 +27,7 @@ import ManagerRequests from './pages/requests/ManageRequests';
 import ManagerDashboard from './pages/manager/Dashboard';
 import InventoryPage from './pages/manager/InventoryPage';
 import AdminDashboard from './pages/admin/AdminDashboardPage';
+import AdminInventoryDashboard from './pages/admin/AdminInventoryDashboard.jsx';
 import ManagerClaims from './pages/manager/ManagerClaims';
 import EquipmentReturns from './pages/manager/EquipmentReturns';
 // (Removed direct dashboard component import; Dashboard route uses lazy UserDashboard via DashboardRedirect)
@@ -119,6 +120,11 @@ export default function App() {
               <Route path="/admin/dashboard" element={
                 <RequireRole roles={['admin']}>
                   <AdminDashboard />
+                </RequireRole>
+              } />
+              <Route path="/admin/inventory" element={
+                <RequireRole roles={['admin']}>
+                  <AdminInventoryDashboard />
                 </RequireRole>
               } />
               {/* Teacher & Staff use shared /dashboard route now (same as student) */}

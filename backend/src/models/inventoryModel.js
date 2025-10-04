@@ -53,6 +53,100 @@ export async function monthlyInventoryAnalytics(user, { start, end }) {
   };
 }
 
+// =============================
+// Admin-wide Inventory Analytics
+// =============================
+// Provides global (or filtered by department/course) overview metrics for admin dashboard.
+// Only routed for admin role (enforced at route level).
+export async function adminInventoryOverview({ department = null, course = null } = {}) {
+  const filters = [];
+  const values = [];
+  let i = 1;
+  if (department) { filters.push(`lower(coalesce(u.department,'')) = lower($${i++}::text)`); values.push(department); }
+  if (course) { filters.push(`lower(coalesce(u.course,'')) = lower($${i++}::text)`); values.push(course); }
+  const where = filters.length ? 'WHERE ' + filters.join(' AND ') : '';
+
+  const overviewSql = `SELECT 
+      COUNT(*)::int AS total_items,
+      COUNT(*) FILTER (WHERE i.category='equipment')::int AS equipment_items,
+      COUNT(*) FILTER (WHERE i.category='supplies')::int AS supplies_items,
+      COUNT(*) FILTER (WHERE i.status IN ('available','in_stock'))::int AS available_like,
+      COUNT(*) FILTER (WHERE i.status='in_use')::int AS in_use_items,
+      COUNT(*) FILTER (WHERE i.status='for_repair')::int AS for_repair_items,
+      COUNT(*) FILTER (WHERE i.status='out_of_stock')::int AS out_of_stock_items
+    FROM inventory_items i
+    LEFT JOIN users u ON u.id = i.created_by
+    ${where}`;
+
+  const statusBreakdownSql = `SELECT i.status, COUNT(*)::int AS count
+    FROM inventory_items i
+    LEFT JOIN users u ON u.id = i.created_by
+    ${where}
+    GROUP BY i.status
+    ORDER BY i.status`;
+
+  const categoryStatusSql = `SELECT i.category, i.status, COUNT(*)::int AS count
+    FROM inventory_items i
+    LEFT JOIN users u ON u.id = i.created_by
+    ${where}
+    GROUP BY i.category, i.status
+    ORDER BY i.category, i.status`;
+
+  const newLast30Sql = `SELECT COUNT(*)::int AS new_last_30
+    FROM inventory_items i
+    LEFT JOIN users u ON u.id = i.created_by
+    ${where ? where + ' AND' : 'WHERE'} i.created_at >= NOW() - INTERVAL '30 days'`;
+
+  const recentChangesSql = `SELECT h.new_status, COUNT(*)::int AS count
+    FROM inventory_item_status_history h
+    JOIN inventory_items i ON i.id = h.item_id
+    LEFT JOIN users u ON u.id = i.created_by
+    ${where ? where + ' AND' : 'WHERE'} h.changed_at >= NOW() - INTERVAL '30 days'
+    GROUP BY h.new_status`;
+
+  const [overviewRes, statusRes, catStatusRes, new30Res, changesRes] = await Promise.all([
+    pool.query(overviewSql, values),
+    pool.query(statusBreakdownSql, values),
+    pool.query(categoryStatusSql, values),
+    pool.query(newLast30Sql, values),
+    pool.query(recentChangesSql, values)
+  ]);
+
+  return {
+    scope: { department: department || null, course: course || null },
+    totals: overviewRes.rows[0] || {},
+    statusBreakdown: statusRes.rows,
+    categoryStatus: catStatusRes.rows,
+    newItemsLast30: (new30Res.rows[0] || {}).new_last_30 || 0,
+    recentStatusChanges: changesRes.rows
+  };
+}
+
+// Distinct department / course options for filters (based on managers owning inventory)
+export async function adminInventoryOptions() {
+  const depSql = `SELECT DISTINCT TRIM(LOWER(u.department)) AS department
+                  FROM users u
+                  WHERE u.role='manager' AND COALESCE(TRIM(u.department),'') <> ''
+                  ORDER BY 1`;
+  const courseSql = `SELECT DISTINCT TRIM(LOWER(u.course)) AS course
+                     FROM users u
+                     WHERE u.role='manager' AND COALESCE(TRIM(u.course),'') <> ''
+                     ORDER BY 1`;
+  const depCourseSql = `SELECT DISTINCT TRIM(LOWER(u.department)) AS department, TRIM(LOWER(u.course)) AS course
+                        FROM users u
+                        WHERE u.role='manager' AND COALESCE(TRIM(u.department),'') <> '' AND COALESCE(TRIM(u.course),'') <> ''`;
+  const [depRes, courseRes, depCourseRes] = await Promise.all([
+    pool.query(depSql),
+    pool.query(courseSql),
+    pool.query(depCourseSql)
+  ]);
+  return {
+    departments: depRes.rows.map(r => r.department),
+    courses: courseRes.rows.map(r => r.course),
+    departmentCourses: depCourseRes.rows
+  };
+}
+
 export async function listItems(filters = {}) {
   const clauses = []; const values = []; let i = 1;
   if (filters.category) { clauses.push(`category = $${i++}`); values.push(filters.category); }
