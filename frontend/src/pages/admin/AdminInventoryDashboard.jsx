@@ -33,6 +33,9 @@ const AdminInventoryDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [optionsLoading, setOptionsLoading] = useState(false);
   const [overview, setOverview] = useState(null);
+  const [userAnalytics, setUserAnalytics] = useState(null);
+  const [claimAnalytics, setClaimAnalytics] = useState(null);
+  const [voteAnalytics, setVoteAnalytics] = useState(null);
   const [filters, setFilters] = useState({ department:'', course:'' });
   const [options, setOptions] = useState({ departments:[], courses:[] });
   const [error, setError] = useState(null);
@@ -55,6 +58,15 @@ const AdminInventoryDashboard = () => {
       if(filters.course) qs.set('course', filters.course);
       const data = await fetchJSON('/api/inventory/analytics/admin/overview'+(qs.toString()?`?${qs.toString()}`:''));
       setOverview(data.overview);
+      // Fetch other analytics in parallel
+      const [usersRes, claimsRes, votesRes] = await Promise.all([
+        fetchJSON('/api/inventory/analytics/admin/users'),
+        fetchJSON('/api/inventory/analytics/admin/claims'),
+        fetchJSON('/api/inventory/analytics/admin/votes')
+      ]);
+      setUserAnalytics(usersRes.users);
+      setClaimAnalytics(claimsRes.claims);
+      setVoteAnalytics(votesRes.votes);
     } catch(e){ setError(e.message||'Failed to load overview'); }
     finally { setLoading(false); }
   };
@@ -126,6 +138,54 @@ const AdminInventoryDashboard = () => {
             </tbody>
           </Table>
         </TableWrap>
+      </Section>
+
+      <Section>
+        <SectionTitle>User Role Analytics</SectionTitle>
+        <TableWrap>
+          <Table>
+            <thead><tr><th>Role</th><th>Count</th></tr></thead>
+            <tbody>
+              {!userAnalytics && <tr><td colSpan={2}>Loading...</td></tr>}
+              {userAnalytics && userAnalytics.roles.map(r => <tr key={r.role}><td><Pill>{r.role}</Pill></td><td>{r.count}</td></tr>)}
+            </tbody>
+          </Table>
+        </TableWrap>
+        <InlineNote>Levels: {userAnalytics?.levels.map(l=>`${l.level}:${l.count}`).join(' | ') || '—'}</InlineNote>
+      </Section>
+
+      <Section>
+        <SectionTitle>Claims Analytics</SectionTitle>
+        <CardsGrid style={{marginBottom:'.75rem'}}>
+          <Card><CardLabel>Avg Pending (hrs)</CardLabel><CardValue>{claimAnalytics? claimAnalytics.avgPendingHours: '—'}</CardValue></Card>
+        </CardsGrid>
+        <TableWrap>
+          <Table>
+            <thead><tr><th>Status</th><th>Count</th></tr></thead>
+            <tbody>
+              {!claimAnalytics && <tr><td colSpan={2}>Loading...</td></tr>}
+              {claimAnalytics && claimAnalytics.status.map(s=> <tr key={s.status}><td><Badge status={s.status}>{s.status}</Badge></td><td>{s.count}</td></tr>)}
+            </tbody>
+          </Table>
+        </TableWrap>
+        <InlineNote>Recent 14d decisions: {claimAnalytics?.recent.map(r=>`${r.date}:${r.count}`).join(', ') || '—'}</InlineNote>
+      </Section>
+
+      <Section>
+        <SectionTitle>Voting Analytics</SectionTitle>
+        <CardsGrid style={{marginBottom:'.75rem'}}>
+          <Card><CardLabel>Total Votes</CardLabel><CardValue>{voteAnalytics? voteAnalytics.totalVotes: 0}</CardValue></Card>
+        </CardsGrid>
+        <TableWrap>
+          <Table>
+            <thead><tr><th>Request</th><th>Category</th><th>Votes</th></tr></thead>
+            <tbody>
+              {!voteAnalytics && <tr><td colSpan={3}>Loading...</td></tr>}
+              {voteAnalytics && voteAnalytics.topRequests.map(r=> <tr key={r.id}><td>{r.item_name}</td><td><Pill>{r.category}</Pill></td><td>{r.votes}</td></tr>)}
+            </tbody>
+          </Table>
+        </TableWrap>
+        <InlineNote>Voter Roles: {voteAnalytics?.voterRoles.map(v=>`${v.role}:${v.count}`).join(' | ') || '—'}</InlineNote>
       </Section>
 
       <Section>

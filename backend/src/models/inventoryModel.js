@@ -147,6 +147,61 @@ export async function adminInventoryOptions() {
   };
 }
 
+// =============================
+// Additional Admin Aggregate Analytics (Users / Claims / Votes)
+// =============================
+export async function adminUserAnalytics() {
+  const rolesSql = `SELECT role, COUNT(*)::int AS count FROM users GROUP BY role ORDER BY role`;
+  const levelSql = `SELECT department AS level, COUNT(*)::int AS count FROM users GROUP BY department`;
+  const courseSql = `SELECT course, COUNT(*)::int AS count FROM users WHERE course IS NOT NULL AND course <> '' GROUP BY course ORDER BY course`;
+  const [rolesRes, levelRes, courseRes] = await Promise.all([
+    pool.query(rolesSql),
+    pool.query(levelSql),
+    pool.query(courseSql)
+  ]);
+  return { roles: rolesRes.rows, levels: levelRes.rows, courses: courseRes.rows };
+}
+
+export async function adminClaimAnalytics() {
+  const statusSql = `SELECT status, COUNT(*)::int AS count FROM inventory_claims GROUP BY status`;
+  const recentSql = `SELECT DATE(decided_at) AS date, COUNT(*)::int AS count
+                     FROM inventory_claims
+                     WHERE decided_at >= NOW() - INTERVAL '14 days' AND decided_at IS NOT NULL
+                     GROUP BY DATE(decided_at)
+                     ORDER BY DATE(decided_at)`;
+  const pendingAgeSql = `SELECT COALESCE(ROUND(AVG(EXTRACT(EPOCH FROM (NOW()-created_at))/3600),2),0) AS avg_pending_hours
+                         FROM inventory_claims WHERE status='pending'`;
+  const [statusRes, recentRes, pendingRes] = await Promise.all([
+    pool.query(statusSql),
+    pool.query(recentSql),
+    pool.query(pendingAgeSql)
+  ]);
+  return { status: statusRes.rows, recent: recentRes.rows, avgPendingHours: pendingRes.rows[0]?.avg_pending_hours || 0 };
+}
+
+export async function adminVoteAnalytics() {
+  // Votes per request + top voted
+  const votesSql = `SELECT r.id, r.item_name, r.category, r.status, COALESCE(v.cnt,0) AS votes
+                    FROM item_requests r
+                    LEFT JOIN (
+                      SELECT request_id, COUNT(*)::int AS cnt FROM item_request_votes GROUP BY request_id
+                    ) v ON v.request_id = r.id
+                    WHERE r.status='approved'
+                    ORDER BY votes DESC, r.id DESC
+                    LIMIT 25`;
+  const totalVotesSql = `SELECT COUNT(*)::int AS total_votes FROM item_request_votes`;
+  const voterRoleSql = `SELECT u.role, COUNT(*)::int AS count
+                        FROM item_request_votes v
+                        JOIN users u ON u.id = v.user_id
+                        GROUP BY u.role`;
+  const [votesRes, totalRes, voterRes] = await Promise.all([
+    pool.query(votesSql),
+    pool.query(totalVotesSql),
+    pool.query(voterRoleSql)
+  ]);
+  return { topRequests: votesRes.rows, totalVotes: totalRes.rows[0]?.total_votes || 0, voterRoles: voterRes.rows };
+}
+
 export async function listItems(filters = {}) {
   const clauses = []; const values = []; let i = 1;
   if (filters.category) { clauses.push(`category = $${i++}`); values.push(filters.category); }
