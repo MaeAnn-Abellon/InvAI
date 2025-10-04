@@ -262,7 +262,7 @@ const Sidebar = () => {
     ],
     admin: [
       { to: '/dashboard', label: 'Dashboard', icon: 'menu' },
-      { to: '/inventory-overview', label: 'Inventory Overview', icon: 'box' },
+      { to: '/admin/inventory', label: 'Inventory Overview', icon: 'box' },
       { to: '/manage-requests', label: 'Request Oversight', icon: 'check' },
       { to: '/user-management', label: 'User Management', icon: 'users' },
       { to: '/analytics', label: 'Reports & Analytics', icon: 'chart' },
