@@ -22,11 +22,26 @@ const InlineNote = styled.div`font-size:.55rem;color:#64748b;margin-top:.4rem;`;
 const Pill = styled.span`background:#eef2ff;color:#3730a3;font-size:.55rem;font-weight:600;padding:.25rem .55rem;border-radius:6px;`;
 const Flex = styled.div`display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;`;
 
-// Fetch helper
-async function fetchJSON(url){
-  const res = await fetch(url);
-  if(!res.ok) throw new Error(await res.text()||'Request failed');
-  return res.json();
+// Local fetch wrapper hitting inventory endpoints using inventoryApi low-level raw equivalent
+// We'll extend inventoryApi temporarily with a private fetch helper if exists; else replicate token header logic.
+async function api(path){
+  const token = localStorage.getItem('auth_token');
+  const headers = { 'Content-Type':'application/json' };
+  if (token) headers.Authorization = 'Bearer ' + token;
+  // Auto-detect backend base similar to apiClient logic
+  let base = 'http://localhost:5000/api';
+  try {
+    const w = window.location;
+    if (w.port === '5173') base = `${w.protocol}//${w.hostname}:5000/api`;
+    else base = `${w.origin}/api`;
+  } catch { /* ignore */ }
+  const res = await fetch(base + path, { headers });
+  const text = await res.text();
+  if (!res.ok) {
+    // Attempt to parse JSON error, fallback to raw
+    try { const j = JSON.parse(text); throw new Error(j.error || 'Request failed'); } catch { throw new Error(text.startsWith('<!doctype') ? 'Server returned HTML (possible 404 / proxy issue)' : (text||'Request failed')); }
+  }
+  try { return JSON.parse(text || '{}'); } catch { throw new Error('Invalid JSON from server'); }
 }
 
 const AdminInventoryDashboard = () => {
@@ -43,7 +58,7 @@ const AdminInventoryDashboard = () => {
   // Load selectable filters
   useEffect(()=>{
     let active=true; setOptionsLoading(true);
-    fetchJSON('/api/inventory/analytics/admin/options')
+    api('/inventory/analytics/admin/options')
       .then(data=>{ if(!active) return; setOptions({ departments:data.departments||[], courses:data.courses||[] }); })
       .catch(e=>{ if(active) console.error('Options error',e); })
       .finally(()=>active && setOptionsLoading(false));
@@ -56,13 +71,13 @@ const AdminInventoryDashboard = () => {
       const qs = new URLSearchParams();
       if(filters.department) qs.set('department', filters.department);
       if(filters.course) qs.set('course', filters.course);
-      const data = await fetchJSON('/api/inventory/analytics/admin/overview'+(qs.toString()?`?${qs.toString()}`:''));
+      const data = await api('/inventory/analytics/admin/overview'+(qs.toString()?`?${qs.toString()}`:''));
       setOverview(data.overview);
       // Fetch other analytics in parallel
       const [usersRes, claimsRes, votesRes] = await Promise.all([
-        fetchJSON('/api/inventory/analytics/admin/users'),
-        fetchJSON('/api/inventory/analytics/admin/claims'),
-        fetchJSON('/api/inventory/analytics/admin/votes')
+        api('/inventory/analytics/admin/users'),
+        api('/inventory/analytics/admin/claims'),
+        api('/inventory/analytics/admin/votes')
       ]);
       setUserAnalytics(usersRes.users);
       setClaimAnalytics(claimsRes.claims);
