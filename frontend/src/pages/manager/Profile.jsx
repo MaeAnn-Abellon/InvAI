@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import FlashMessage from '@/components/ui/FlashMessage';
 import { useAuth } from '@/context/useAuth';
 import { getAvatarUrl } from '@/utils/avatarUtils';
 import { fetchManagerActivity } from '@/services/managerApi';
 
 export default function ManagerProfile() {
-  const { user, refreshAuth } = useAuth();
+  const { user } = useAuth();
   
   const [form, setForm] = useState({
     name: user?.fullName || user?.name || 'Manager Name',
@@ -38,52 +39,8 @@ export default function ManagerProfile() {
     }
   }, [user?.id, user?.role]);
 
-  // Avatar upload functionality
-  const fileRef = useRef(null);
-  const [photoFile, setPhotoFile] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
-
-  const pickFile = () => fileRef.current?.click();
-  const onFileChange = e => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setPhotoFile(f);
-    setPreview(URL.createObjectURL(f));
-  };
-
-  const savePhoto = async () => {
-    if (!photoFile) return;
-    setUploading(true);
-    try {
-      const fd = new FormData(); 
-      fd.append('avatar', photoFile);
-      const res = await fetch(`http://localhost:5000/api/users/${user.id}/avatar`, {
-        method:'POST',
-        headers:{ Authorization:'Bearer '+localStorage.getItem('auth_token') },
-        body: fd
-      });
-      const data = await res.json();
-      if(!res.ok) throw new Error(data.error||'Upload failed');
-      URL.revokeObjectURL(preview);
-      setPhotoFile(null); 
-      setPreview(null);
-      alert('Avatar updated successfully!');
-      // Refresh user data to update avatar in sidebar and other components
-      if (refreshAuth) refreshAuth();
-    } catch(e){ 
-      alert(e.message); 
-    }
-    finally { 
-      setUploading(false); 
-    }
-  };
-
-  const cancelPhoto = () => {
-    if (preview) URL.revokeObjectURL(preview);
-    setPreview(null);
-    setPhotoFile(null);
-  };
+  // Avatar upload disabled for deployment (no persistent storage)
+  const preview = null;
 
   const submit = e => {
     e.preventDefault();
@@ -93,6 +50,8 @@ export default function ManagerProfile() {
 
   return (
     <div className="manager-profile" style={{padding: '2rem', maxWidth: '800px'}}>
+      {/* Flash message placeholder (can be wired later) */}
+      {/* <FlashMessage message="Saved" type="success" duration={2500} /> */}
       <h2>Manager Profile</h2>
       
       {/* Profile Photo Section */}
@@ -112,72 +71,25 @@ export default function ManagerProfile() {
             }}
           />
           <div style={{display: 'flex', gap: '0.75rem', flexWrap: 'wrap'}}>
-            {!photoFile && (
-              <button 
-                type="button" 
-                onClick={pickFile}
-                style={{
-                  background: '#4834d4',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.75rem 1.25rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem'
-                }}
-              >
-                Change Photo
-              </button>
-            )}
-            {photoFile && (
-              <>
-                <button
-                  type="button"
-                  onClick={savePhoto}
-                  disabled={uploading}
-                  style={{
-                    background: '#4834d4',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '8px',
-                    cursor: uploading ? 'not-allowed' : 'pointer',
-                    fontSize: '0.9rem',
-                    opacity: uploading ? 0.7 : 1
-                  }}
-                >
-                  {uploading ? 'Saving...' : 'Save Photo'}
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelPhoto}
-                  disabled={uploading}
-                  style={{
-                    background: '#ffffff',
-                    color: '#1e293b',
-                    border: '1px solid #cbd5e1',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '8px',
-                    cursor: uploading ? 'not-allowed' : 'pointer',
-                    fontSize: '0.9rem',
-                    opacity: uploading ? 0.7 : 1
-                  }}
-                >
-                  Cancel
-                </button>
-              </>
-            )}
+            <button 
+              type="button" 
+              onClick={() => alert('Change photo is unavailable at the moment')}
+              style={{
+                background: '#4834d4',
+                color: 'white',
+                border: 'none',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '0.9rem'
+              }}
+            >
+              Change Photo
+            </button>
           </div>
         </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          style={{display:'none'}}
-          onChange={onFileChange}
-        />
         <small style={{fontSize: '0.8rem', color: '#64748b'}}>
-          JPG/PNG up to 2MB. Changes will be visible immediately.
+          Avatar upload temporarily disabled.
         </small>
       </div>
 

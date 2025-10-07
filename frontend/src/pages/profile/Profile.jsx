@@ -31,7 +31,7 @@
 
 // const FormGrid = styled.div`
 //   display: grid;
-//   gap: 1rem 1.25rem;
+          // Toast removed (avatar feature disabled)
 //   grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
 // `;
 
@@ -310,7 +310,8 @@
 
 
 // filepath: d:\Capstone\InvAI\frontend\src\pages\profile\Profile.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import FlashMessage from '@/components/ui/FlashMessage';
 import styled from '@emotion/styled';
 import { PageSurface, GradientHeading, GlassPanel, PrimaryButton, SubNote as GSubNote, Divider as GDivider } from '@/components/ui/Glass';
 import { useAuth } from '@/context/useAuth';
@@ -414,50 +415,12 @@ const SmallNote = styled.small`
 `;
 
 export default function Profile() {
-  const { user, refreshAuth } = useAuth();
+  const { user } = useAuth();
 
   // NEW state for avatar change
-  const fileRef = useRef(null);
-  const [photoFile, setPhotoFile] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
 
-  const pickFile = () => fileRef.current?.click();
-  const onFileChange = e => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setPhotoFile(f);
-    setPreview(URL.createObjectURL(f));
-  };
-  // Toast system
-  const [toasts,setToasts] = useState([]);
-  const pushToast = (msg) => { const id=Date.now(); setToasts(t=>[...t,{id,msg}]); setTimeout(()=> setToasts(t=>t.filter(x=>x.id!==id)),3000); };
+  // Removed avatar upload & toast system for deployment (no persistent storage)
 
-  const savePhoto = async () => {
-    if (!photoFile) return;
-    setUploading(true);
-    try {
-      const fd = new FormData(); fd.append('avatar', photoFile);
-      const res = await fetch(`http://localhost:5000/api/users/${user.id}/avatar`, {
-        method:'POST',
-        headers:{ Authorization:'Bearer '+localStorage.getItem('auth_token') },
-        body: fd
-      });
-      const data = await res.json();
-      if(!res.ok) throw new Error(data.error||'Upload failed');
-      URL.revokeObjectURL(preview);
-      setPhotoFile(null); setPreview(null);
-      pushToast('Avatar updated');
-      // Refresh user data to update avatar in sidebar and other components
-      if (refreshAuth) refreshAuth();
-    } catch(e){ alert(e.message); }
-    finally { setUploading(false); }
-  };
-  const cancelPhoto = () => {
-    if (preview) URL.revokeObjectURL(preview);
-    setPreview(null);
-    setPhotoFile(null);
-  };
 
   const [form, setForm] = useState({
     name: user?.fullName || user?.name || '',
@@ -472,6 +435,9 @@ export default function Profile() {
 
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
+    // Avatar upload removed for deployment (no persistent storage)
+    const preview = null;
+  const [flash, setFlash] = useState(null);
 
   const onChange = e => {
     const { name, value } = e.target;
@@ -501,7 +467,7 @@ export default function Profile() {
         });
         const data = await res.json();
         if(!res.ok) throw new Error(data.error||'Update failed');
-        pushToast('Profile updated');
+        setFlash({ msg: 'Profile updated', type: 'success', ts: Date.now() });
         setEditing(false);
         // Optionally refresh local form with canonical response
         if(data.user){
@@ -554,6 +520,11 @@ export default function Profile() {
   return (
     <>
     <PageContainer>
+  {flash && (
+    <div style={{marginBottom:'1rem'}}>
+      <FlashMessage key={flash.ts} message={flash.msg} type={flash.type} duration={3000} />
+    </div>
+  )}
   <Heading>Profile / Account Settings</Heading>
       <SummaryCard>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'1rem', flexWrap:'wrap'}}>
@@ -582,40 +553,17 @@ export default function Profile() {
             alt="Profile"
           />
           <PhotoButtons>
-            {!photoFile && (
-              <Button type="button" onClick={pickFile}>
-                Change Photo
-              </Button>
-            )}
-            {photoFile && (
-              <>
-                <Button
-                  type="button"
-                  onClick={savePhoto}
-                  disabled={uploading}
-                >
-                  {uploading ? 'Saving...' : 'Save Photo'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={cancelPhoto}
-                  disabled={uploading}
-                >
-                  Cancel
-                </Button>
-              </>
-            )}
+            <Button
+              type="button"
+              onClick={() => alert('Change photo is unavailable at the moment')}
+              title="Avatar uploads disabled in this deployment"
+            >
+              Change Photo
+            </Button>
           </PhotoButtons>
         </PhotoRow>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          style={{display:'none'}}
-          onChange={onFileChange}
-        />
-        <SmallNote>JPG/PNG up to 2MB. Will persist after backend upload integration.</SmallNote>
+        {/* Avatar upload temporarily disabled (no persistent storage in deployment) */}
+        <SmallNote>Avatar upload temporarily disabled.</SmallNote>
       </Section>
 
       {/* Manager Activity Section */}
@@ -787,11 +735,6 @@ export default function Profile() {
         </DangerZone>
       </Section>
     </PageContainer>
-    { !!toasts.length && (
-      <div style={{position:'fixed', bottom:'1rem', left:'50%', transform:'translateX(-50%)', display:'flex', flexDirection:'column', gap:'.5rem', zIndex:6000}}>
-        {toasts.map(t=> <div key={t.id} style={{background:'rgba(255,255,255,.9)', border:'1px solid #6366f1', padding:'.55rem .75rem', fontSize:'.55rem', fontWeight:600, color:'#312e81', borderRadius:'12px', boxShadow:'0 6px 22px -8px rgba(79,70,229,.45)', backdropFilter:'blur(6px) saturate(150%)'}}>{t.msg}</div>)}
-      </div>
-    ) }
     </>
   );
 }
