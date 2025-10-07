@@ -24,15 +24,37 @@ if (rawCors) {
 
 app.use(cors({
   origin: (origin, cb) => {
+    if (process.env.CORS_ALLOW_ALL === 'true') return cb(null, true);
     // Allow non-browser or same-origin requests with no origin header
     if (!origin) return cb(null, true);
     if (!allowedOrigins || allowedOrigins.length === 0) return cb(null, true);
     if (allowedOrigins.includes(origin)) return cb(null, true);
-    console.warn('[cors] Blocked origin:', origin);
+    console.warn('[cors] Blocked origin:', origin, 'allowed:', allowedOrigins);
     return cb(new Error('CORS: Origin not allowed'));
   },
+  methods: ['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','Accept'],
+  optionsSuccessStatus: 200,
   credentials: false // using Authorization header (token), not cookies
 }));
+
+// Optional per-request debug (set DEBUG_CORS=1)
+if (process.env.DEBUG_CORS === '1') {
+  app.use((req,res,next)=>{
+    if (req.method === 'OPTIONS') {
+      console.log('[cors][OPTIONS]', req.headers.origin, req.path);
+    }
+    next();
+  });
+}
+
+// Simple endpoint to view current CORS config remotely if needed
+app.get('/api/cors-check', (_req,res)=>{
+  res.json({
+    allowedOrigins: allowedOrigins || 'ALL',
+    allowAllFlag: process.env.CORS_ALLOW_ALL === 'true'
+  });
+});
 app.use(express.json());
 
 app.get('/api/health', (_req,res)=>res.json({ ok:true }));
