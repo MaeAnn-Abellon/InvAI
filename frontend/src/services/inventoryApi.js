@@ -12,7 +12,13 @@ async function raw(path, options) {
   const token = localStorage.getItem('auth_token');
   const headers = { 'Content-Type':'application/json' };
   if (token) headers.Authorization = 'Bearer ' + token;
-  const res = await fetch('http://localhost:5000/api' + path, { headers, ...options });
+  // Use shared apiClient base if available (dynamic environment resolution)
+  let base;
+  try {
+    const { getApiBase } = await import('./apiClient.js');
+    base = getApiBase();
+  } catch { base = 'http://localhost:5000/api'; }
+  const res = await fetch(base + path, { headers, ...options });
   const text = await res.text();
   let data = {};
   if (text) {

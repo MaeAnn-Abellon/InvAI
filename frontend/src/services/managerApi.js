@@ -22,7 +22,9 @@ export async function saveManagerProfile(profile) {
 }
 export async function fetchManagerActivity(userId) {
   try {
-    const response = await fetch(`http://localhost:5000/api/users/${userId}/activity`, {
+    let base;
+    try { const { getApiBase } = await import('./apiClient.js'); base = getApiBase(); } catch { base = 'http://localhost:5000/api'; }
+    const response = await fetch(`${base}/users/${userId}/activity`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
       }

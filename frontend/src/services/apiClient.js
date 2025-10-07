@@ -37,6 +37,10 @@ function deriveBase() {
 let BASE = deriveBase();
 console.log('apiClient BASE:', BASE);
 
+// Expose helpers for other modules to build URLs consistently
+export function getApiBase() { return BASE; } // includes trailing /api
+export function getApiOrigin() { return BASE.replace(/\/_?api$/, ''); }
+
 // Warn if deployed (non-localhost host) but BASE resolved to localhost fallback
 try {
   if (typeof window !== 'undefined') {

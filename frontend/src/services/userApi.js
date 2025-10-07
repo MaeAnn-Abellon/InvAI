@@ -1,10 +1,12 @@
 // User management API client
-const base = (()=>{
-  try {
-    const w = window.location;
-    return (w.port === '5173') ? `${w.protocol}//${w.hostname}:5000/api` : `${w.origin}/api`;
-  } catch { return 'http://localhost:5000/api'; }
-})();
+let base = 'http://localhost:5000/api';
+try {
+  // dynamic import avoids circular issues during build
+  (async()=>{
+    try { const { getApiBase } = await import('./apiClient.js'); base = getApiBase(); }
+    catch { /* fallback remains localhost */ }
+  })();
+} catch { /* ignore */ }
 
 function authHeaders() {
   const token = localStorage.getItem('auth_token');

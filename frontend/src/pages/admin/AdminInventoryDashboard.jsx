@@ -28,13 +28,8 @@ async function api(path){
   const token = localStorage.getItem('auth_token');
   const headers = { 'Content-Type':'application/json' };
   if (token) headers.Authorization = 'Bearer ' + token;
-  // Auto-detect backend base similar to apiClient logic
-  let base = 'http://localhost:5000/api';
-  try {
-    const w = window.location;
-    if (w.port === '5173') base = `${w.protocol}//${w.hostname}:5000/api`;
-    else base = `${w.origin}/api`;
-  } catch { /* ignore */ }
+  let base;
+  try { const { getApiBase } = await import('../../services/apiClient'); base = getApiBase(); } catch { base = 'http://localhost:5000/api'; }
   const res = await fetch(base + path, { headers });
   const text = await res.text();
   if (!res.ok) {

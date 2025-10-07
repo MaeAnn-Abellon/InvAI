@@ -1,6 +1,14 @@
 import defaultAvatar from '@/assets/avatar.png';
 
-const API_BASE_URL = 'http://localhost:5000';
+let API_BASE_URL = 'http://localhost:5000';
+try {
+  (async()=>{
+    try {
+      const { getApiOrigin } = await import('../services/apiClient.js');
+      API_BASE_URL = getApiOrigin();
+    } catch { /* fallback remains */ }
+  })();
+} catch { /* ignore */ }
 
 /**
  * Get the full avatar URL for a user
