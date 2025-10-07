@@ -132,7 +132,9 @@ export default function AboutApp(){
         <span style={{fontSize:'.55rem', opacity:.85}}>Consolatrix College of Toledo City, Inc.</span>
         <span style={{fontSize:'.55rem', opacity:.65}}>© {new Date().getFullYear()} InvAI / SmartStock</span>
       </Callout>
-      <div style={{marginTop:'1.4rem'}}><Link to="/dashboard" style={{fontSize:'.7rem', fontWeight:600, color:'#6366f1'}}>← Back to Dashboard</Link></div>
+      <div style={{marginTop:'1.4rem'}}>
+        <Link to="/" style={{fontSize:'.7rem', fontWeight:600, color:'#6366f1'}} aria-label="Return to Landing Page">← Back to Landing Page</Link>
+      </div>
     </Wrapper>
   );
 }
