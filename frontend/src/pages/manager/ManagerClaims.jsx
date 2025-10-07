@@ -4,9 +4,10 @@ import { inventoryApi } from '@/services/inventoryApi';
 
 // Temporary delete endpoint wrapper (assumes backend support to be added later)
 async function deleteClaim(claimId){
-  // Placeholder: assuming DELETE /api/inventory/claims/:id (adjust when backend added)
   const token = localStorage.getItem('auth_token');
-  const res = await fetch(`http://localhost:5000/api/inventory/claims/${claimId}`, { method:'DELETE', headers:{ Authorization: token?`Bearer ${token}`:'' } });
+  let base;
+  try { const { getApiBase } = await import('@/services/apiClient'); base = getApiBase(); } catch { base = 'http://localhost:5000/api'; }
+  const res = await fetch(`${base}/inventory/claims/${claimId}`, { method:'DELETE', headers:{ Authorization: token?`Bearer ${token}`:'' } });
   if(!res.ok) throw new Error('Delete failed');
   return true;
 }
