@@ -28,6 +28,7 @@ dist/
 backend/uploads/
 .env
 .env.*
+!.env.example
 *.log
 .vscode/
 .DS_Store
