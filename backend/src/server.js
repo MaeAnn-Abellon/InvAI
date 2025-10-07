@@ -12,8 +12,25 @@ import { fileURLToPath } from 'url';
 dotenv.config();
 const app = express();
 
+// Enhanced CORS: allow comma-separated origins (e.g. "https://app.vercel.app,http://localhost:5173")
+const rawCors = process.env.CORS_ORIGIN;
+let allowedOrigins = null;
+if (rawCors) {
+  allowedOrigins = rawCors.split(',').map(o => o.trim()).filter(Boolean);
+  console.log('[cors] Allowed origins:', allowedOrigins);
+} else {
+  console.log('[cors] CORS_ORIGIN not set – allowing all origins (development fallback)');
+}
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN,
+  origin: (origin, cb) => {
+    // Allow non-browser or same-origin requests with no origin header
+    if (!origin) return cb(null, true);
+    if (!allowedOrigins || allowedOrigins.length === 0) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    console.warn('[cors] Blocked origin:', origin);
+    return cb(new Error('CORS: Origin not allowed'));
+  },
   credentials: false // using Authorization header (token), not cookies
 }));
 app.use(express.json());
