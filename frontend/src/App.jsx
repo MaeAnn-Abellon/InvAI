@@ -33,6 +33,7 @@ import ManagerVotingPage from './pages/manager/ManagerVotingPage';
 import AboutApp from './pages/about/AboutApp';
 // (Removed direct dashboard component import; Dashboard route uses lazy UserDashboard via DashboardRedirect)
 import DashboardRedirect from '@/components/Dashboard/DashboardRedirect';
+import NotFound from '@/pages/NotFound';
 
 export default function App() {
   return (
@@ -141,6 +142,7 @@ export default function App() {
           </Route>
 
           {/* Fallback */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </AuthProvider>
