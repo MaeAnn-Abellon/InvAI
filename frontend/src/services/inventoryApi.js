@@ -17,7 +17,8 @@ async function raw(path, options) {
   try {
     const { getApiBase } = await import('./apiClient.js');
     base = getApiBase();
-  } catch { base = 'http://localhost:5000/api'; }
+  } catch { base = ''; }
+  if(!base) throw new Error('API base not configured (missing VITE_API_BASE)');
   const res = await fetch(base + path, { headers, ...options });
   const text = await res.text();
   let data = {};

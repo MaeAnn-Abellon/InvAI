@@ -11,27 +11,14 @@ export function setToken(t) {
   }
 }
 
-// Resolve API base dynamically:
-// 1. Use VITE_API_BASE if defined
-// 2. Else try to swap common Vite port (5173) with backend default 5000
-// 3. Fallback to absolute localhost:5000
+// Resolve API base.
+// Production requirement: VITE_API_BASE must be explicitly provided (e.g. https://your-service.onrender.com/api)
+// We intentionally removed localhost fallbacks for deployment safety.
 function deriveBase() {
   const envBase = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : null;
   if (envBase) return envBase.replace(/\/?$/, '');
-  if (typeof window !== 'undefined') {
-    try {
-      const url = new URL(window.location.href);
-      // If frontend dev server (vite default 5173), assume backend 5000
-      if (url.port === '5173') {
-        return `${url.protocol}//${url.hostname}:5000/api`;
-      }
-      // If served from same origin and already includes /api path, keep it
-      if (url.pathname.startsWith('/api')) {
-        return `${url.origin}/api`;
-      }
-    } catch { /* ignore */ }
-  }
-  return 'http://localhost:5000/api';
+  console.error('[apiClient] VITE_API_BASE not set. Configure it in your environment (e.g. Vercel project settings).');
+  return '';
 }
 
 let BASE = deriveBase();
@@ -41,17 +28,7 @@ console.log('apiClient BASE:', BASE);
 export function getApiBase() { return BASE; } // includes trailing /api
 export function getApiOrigin() { return BASE.replace(/\/_?api$/, ''); }
 
-// Warn if deployed (non-localhost host) but BASE resolved to localhost fallback
-try {
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    const isLocalFrontend = ['localhost','127.0.0.1','::1'].includes(host);
-    const baseIsLocal = /localhost:5000/.test(BASE);
-    if (!isLocalFrontend && baseIsLocal) {
-      console.warn('[apiClient] WARNING: Frontend is deployed on', host, 'but API base fell back to localhost:5000. Set VITE_API_BASE to your Render URL (e.g. https://YOUR-BACKEND.onrender.com/api) in Vercel project settings and redeploy.');
-    }
-  }
-} catch { /* ignore */ }
+// No warning logic needed now; absence already logged as error.
 
 async function req(path, options = {}) {
   // Always check localStorage for the latest token

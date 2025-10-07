@@ -1,6 +1,6 @@
 import defaultAvatar from '@/assets/avatar.png';
 
-let API_BASE_URL = 'http://localhost:5000';
+let API_BASE_URL = '';
 try {
   (async()=>{
     try {

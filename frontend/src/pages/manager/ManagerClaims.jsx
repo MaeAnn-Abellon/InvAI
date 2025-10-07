@@ -6,7 +6,8 @@ import { inventoryApi } from '@/services/inventoryApi';
 async function deleteClaim(claimId){
   const token = localStorage.getItem('auth_token');
   let base;
-  try { const { getApiBase } = await import('@/services/apiClient'); base = getApiBase(); } catch { base = 'http://localhost:5000/api'; }
+  try { const { getApiBase } = await import('@/services/apiClient'); base = getApiBase(); } catch { base = ''; }
+  if(!base) throw new Error('API base not configured');
   const res = await fetch(`${base}/inventory/claims/${claimId}`, { method:'DELETE', headers:{ Authorization: token?`Bearer ${token}`:'' } });
   if(!res.ok) throw new Error('Delete failed');
   return true;

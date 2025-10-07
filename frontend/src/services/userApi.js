@@ -1,10 +1,10 @@
 // User management API client
-let base = 'http://localhost:5000/api';
+let base = '';
 try {
   // dynamic import avoids circular issues during build
   (async()=>{
-    try { const { getApiBase } = await import('./apiClient.js'); base = getApiBase(); }
-    catch { /* fallback remains localhost */ }
+  try { const { getApiBase } = await import('./apiClient.js'); base = getApiBase(); }
+  catch { console.error('[userApi] getApiBase not available; ensure apiClient initialized'); }
   })();
 } catch { /* ignore */ }
 
@@ -16,6 +16,7 @@ function authHeaders() {
 }
 
 export async function listUsers(params={}) {
+  if(!base) throw new Error('API base not configured');
   const qs = new URLSearchParams();
   if (params.department) qs.append('department', params.department);
   if (params.course) qs.append('course', params.course);
@@ -26,6 +27,7 @@ export async function listUsers(params={}) {
 }
 
 export async function createUser(user) {
+  if(!base) throw new Error('API base not configured');
   const res = await fetch(`${base}/users`, { method:'POST', headers: authHeaders(), body: JSON.stringify(user) });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error||'Failed to create user');
@@ -33,6 +35,7 @@ export async function createUser(user) {
 }
 
 export async function updateUser(id, patch) {
+  if(!base) throw new Error('API base not configured');
   const res = await fetch(`${base}/users/${id}`, { method:'PATCH', headers: authHeaders(), body: JSON.stringify(patch) });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error||'Failed to update user');
@@ -40,6 +43,7 @@ export async function updateUser(id, patch) {
 }
 
 export async function deleteUserApi(id) {
+  if(!base) throw new Error('API base not configured');
   const res = await fetch(`${base}/users/${id}`, { method:'DELETE', headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error||'Failed to delete user');

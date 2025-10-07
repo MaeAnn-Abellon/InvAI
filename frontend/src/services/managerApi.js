@@ -23,8 +23,9 @@ export async function saveManagerProfile(profile) {
 export async function fetchManagerActivity(userId) {
   try {
     let base;
-    try { const { getApiBase } = await import('./apiClient.js'); base = getApiBase(); } catch { base = 'http://localhost:5000/api'; }
-    const response = await fetch(`${base}/users/${userId}/activity`, {
+  try { const { getApiBase } = await import('./apiClient.js'); base = getApiBase(); } catch { base = ''; }
+  if(!base) throw new Error('API base not configured');
+  const response = await fetch(`${base}/users/${userId}/activity`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
       }

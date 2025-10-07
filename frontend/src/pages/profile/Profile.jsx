@@ -461,8 +461,9 @@ export default function Profile() {
         };
         if (form.password) body.password = form.password;
         let base;
-        try { const { getApiBase } = await import('../../services/apiClient'); base = getApiBase(); } catch { base = 'http://localhost:5000/api'; }
-        const res = await fetch(`${base}/users/${user.id}`, {
+  try { const { getApiBase } = await import('../../services/apiClient'); base = getApiBase(); } catch { base = ''; }
+  if(!base) throw new Error('API base not configured');
+  const res = await fetch(`${base}/users/${user.id}`, {
           method:'PATCH',
           headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+localStorage.getItem('auth_token') },
           body: JSON.stringify(body)

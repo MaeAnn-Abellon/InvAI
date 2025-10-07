@@ -29,7 +29,8 @@ async function api(path){
   const headers = { 'Content-Type':'application/json' };
   if (token) headers.Authorization = 'Bearer ' + token;
   let base;
-  try { const { getApiBase } = await import('../../services/apiClient'); base = getApiBase(); } catch { base = 'http://localhost:5000/api'; }
+  try { const { getApiBase } = await import('../../services/apiClient'); base = getApiBase(); } catch { base = ''; }
+  if(!base) throw new Error('API base not configured');
   const res = await fetch(base + path, { headers });
   const text = await res.text();
   if (!res.ok) {
