@@ -37,6 +37,18 @@ function deriveBase() {
 let BASE = deriveBase();
 console.log('apiClient BASE:', BASE);
 
+// Warn if deployed (non-localhost host) but BASE resolved to localhost fallback
+try {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    const isLocalFrontend = ['localhost','127.0.0.1','::1'].includes(host);
+    const baseIsLocal = /localhost:5000/.test(BASE);
+    if (!isLocalFrontend && baseIsLocal) {
+      console.warn('[apiClient] WARNING: Frontend is deployed on', host, 'but API base fell back to localhost:5000. Set VITE_API_BASE to your Render URL (e.g. https://YOUR-BACKEND.onrender.com/api) in Vercel project settings and redeploy.');
+    }
+  }
+} catch { /* ignore */ }
+
 async function req(path, options = {}) {
   // Always check localStorage for the latest token
   const currentToken = localStorage.getItem('auth_token');
