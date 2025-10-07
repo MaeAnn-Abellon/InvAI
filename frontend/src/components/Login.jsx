@@ -208,7 +208,7 @@ import { useAuth } from '../context/useAuth';
 const Container = styled.div`
   display: flex;
   min-height: 100vh;
-  font-family: 'Inter', system-ui, sans-serif;
+  /* Inherit global Roboto font */
   background:#f1f5f9;
   overflow: hidden;
 `;
@@ -321,25 +321,7 @@ const Input = styled.input`
   &::placeholder{color:#64748b;font-weight:400;}
   &:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.35),0 2px 6px -2px rgba(72,52,212,.35);background:#fff;}
 `;
-const Select = styled.select`
-  width:100%;
-  padding:0.85rem 0.95rem;
-  margin-bottom:0.9rem;
-  border:1px solid #e2e8f0;
-  border-radius:14px;
-  background:#ffffffcc;
-  font-size:.9rem;
-  font-weight:500;
-  letter-spacing:.3px;
-  color:#0f172a;
-  transition:.28s;
-  appearance:none;
-  background-image: linear-gradient(45deg,transparent 50%,#6366f1 50%), linear-gradient(135deg,#6366f1 50%,transparent 50%);
-  background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 14px) calc(50% - 3px);
-  background-size:4px 4px,4px 4px; background-repeat:no-repeat;
-  &::-ms-expand{display:none;}
-  &:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.35),0 2px 6px -2px rgba(72,52,212,.35);background:#fff;}
-`;
+// Role select removed – role inferred from server response.
 const LoginButton = styled.button`
   width:100%;
   padding:0.95rem 1.1rem;
@@ -376,7 +358,7 @@ const Login = () => {
   const { login, getDashboardPath } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [formData, setFormData] = useState({ emailOrUsername:'', password:'', role:'student' });
+  const [formData, setFormData] = useState({ emailOrUsername:'', password:'' });
 
   const handleChange = (e) => {
     setFormData(prev => ({...prev, [e.target.name]: e.target.value }));
@@ -408,13 +390,7 @@ const Login = () => {
           <FormTitle>Log In</FormTitle>
           <Input type="text" name="emailOrUsername" placeholder="Email or username" value={formData.emailOrUsername} onChange={handleChange} autoComplete="username" required />
           <Input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} autoComplete="current-password" required />
-          <Select name="role" value={formData.role} onChange={(e)=>setFormData({...formData, role:e.target.value})}>
-            <option value="student">Student</option>
-            <option value="teacher">Teacher</option>
-            <option value="staff">Staff</option>
-            <option value="manager">Manager</option>
-            <option value="admin">Admin</option>
-          </Select>
+          {/* Role selection removed; backend assigns correct role. */}
           <ForgotPasswordText><Link to="/forgot-password">Forgot Password?</Link></ForgotPasswordText>
           {error && <ErrorMessage>{error}</ErrorMessage>}
           <LoginButton type="submit" disabled={isLoading}>{isLoading ? 'Logging in...' : 'Log In'}</LoginButton>

@@ -20,11 +20,23 @@ export async function saveManagerProfile(profile) {
   console.log('save profile', profile);
   return { success: true };
 }
-export async function fetchManagerActivity() {
-  return [
-    'Last Excel upload: 2025-09-20',
-    'Last item edit: 2025-09-22',
-  ];
+export async function fetchManagerActivity(userId) {
+  try {
+    const response = await fetch(`http://localhost:5000/api/users/${userId}/activity`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+      }
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch activity');
+    }
+    const data = await response.json();
+    return data.activity || [];
+  } catch (error) {
+    console.error('Error fetching manager activity:', error);
+    // Fallback to empty array if API fails
+    return [];
+  }
 }
 
 // NOTIFICATIONS

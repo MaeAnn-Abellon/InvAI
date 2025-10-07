@@ -5,12 +5,10 @@ import ProtectedRoute from '@/routes/ProtectedRoute';
 import RequireRole from '@/routes/RequireRole';
 
 import AppLayout from '@/components/layout/AppLayout';
-import RoleDashboard from '@/components/Dashboard/RoleDashboard';
 
 import ManageRequests from '@/pages/requests/ManageRequests';
 import NewRequestPage from '@/pages/requests/NewRequestPage';
 import VotingBoardPage from '@/pages/voting/VotingBoardPage';
-import InventoryManagement from '@/pages/inventory/InventoryManagement';
 import InventoryOverview from '@/pages/inventory/InventoryOverview';
 import Reports from '@/pages/inventory/Reports';
 import UserManagement from '@/pages/users/UserManagement';
@@ -30,6 +28,8 @@ import AdminDashboard from './pages/admin/AdminDashboardPage';
 import AdminInventoryDashboard from './pages/admin/AdminInventoryDashboard.jsx';
 import ManagerClaims from './pages/manager/ManagerClaims';
 import EquipmentReturns from './pages/manager/EquipmentReturns';
+import ManagerVotingPage from './pages/manager/ManagerVotingPage';
+import AboutApp from './pages/about/AboutApp';
 // (Removed direct dashboard component import; Dashboard route uses lazy UserDashboard via DashboardRedirect)
 import DashboardRedirect from '@/components/Dashboard/DashboardRedirect';
 
@@ -42,6 +42,9 @@ export default function App() {
           <Route path="/" element={<Landing />} /> {/* <-- ADDED landing page */}
           <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+          {/* Public About page accessible without auth */}
+          <Route path="/about" element={<AboutApp />} />
+          <Route path="/aboutapp" element={<AboutApp />} />
 
           {/* Protected app */}
           <Route element={<ProtectedRoute />}>
@@ -112,6 +115,11 @@ export default function App() {
                   <EquipmentReturns />
                 </RequireRole>
               } />
+              <Route path="/manager/voting" element={
+                <RequireRole roles={['manager']}>
+                  <ManagerVotingPage />
+                </RequireRole>
+              } />
               <Route path="/manager/inventory" element={
                 <RequireRole roles={['manager']}>
                   <InventoryPage />
@@ -132,7 +140,6 @@ export default function App() {
           </Route>
 
           {/* Fallback */}
-          <Route path="*" element={<Landing />} /> {/* optional: or keep Login */}
         </Routes>
       </Router>
     </AuthProvider>

@@ -7,7 +7,7 @@ import { useAuth } from '../context/useAuth';
 
 
 const Container = styled.div`
-  display:flex; min-height:100vh; font-family:'Inter', system-ui, sans-serif; background:#f1f5f9; overflow:hidden;
+  display:flex; min-height:100vh; background:#f1f5f9; overflow:hidden;
 `;
 /* Left: Form side (mirrors Login) */
 const FormSide = styled.div`

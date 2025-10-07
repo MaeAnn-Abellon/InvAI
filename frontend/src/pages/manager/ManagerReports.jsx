@@ -250,7 +250,7 @@ const ManagerReports = () => {
           }
           
           body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Inherit global Roboto font */
             line-height: 1.5;
             color: #1a202c;
             max-width: 1200px;
@@ -584,37 +584,38 @@ const ManagerReports = () => {
           ${createStatusChart()}
         </div>
 
-        <div class="analytics-grid">
-          <div class="analytics-card">
-            <div class="value">${totalItems}</div>
-            <div class="label">Total Items</div>
-            <div class="description">Complete inventory count</div>
-          </div>
-          <div class="analytics-card">
-            <div class="value">${availableCount}</div>
-            <div class="label">Available</div>
-            <div class="description">Ready for deployment</div>
-          </div>
-          <div class="analytics-card">
-            <div class="value">${inUseCount}</div>
-            <div class="label">In Use</div>
-            <div class="description">Currently deployed</div>
-          </div>
-          <div class="analytics-card">
-            <div class="value">${lowStockCount}</div>
-            <div class="label">Out of Stock</div>
-            <div class="description">Requires restocking</div>
-          </div>
-          <div class="analytics-card">
-            <div class="value">${forRepairCount}</div>
-            <div class="label">For Repair</div>
-            <div class="description">Maintenance required</div>
-          </div>
-          <div class="analytics-card">
-            <div class="value">${((availableCount / totalItems) * 100).toFixed(1)}%</div>
-            <div class="label">Availability Rate</div>
-            <div class="description">Operational readiness</div>
-          </div>
+  <div class="page-break"></div>
+  <div style="margin:10px 0 30px">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="background:#f1f5f9;text-align:left;">
+                <th style="padding:8px 10px;border:1px solid #e2e8f0;">Metric</th>
+                <th style="padding:8px 10px;border:1px solid #e2e8f0;">Value</th>
+                <th style="padding:8px 10px;border:1px solid #e2e8f0;">Metric</th>
+                <th style="padding:8px 10px;border:1px solid #e2e8f0;">Value</th>
+                <th style="padding:8px 10px;border:1px solid #e2e8f0;">Metric</th>
+                <th style="padding:8px 10px;border:1px solid #e2e8f0;">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:600;">Total Items</td>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;">${totalItems}</td>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:600;">Available</td>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;">${availableCount}</td>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:600;">In Use</td>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;">${inUseCount}</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:600;">Out of Stock</td>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;">${lowStockCount}</td>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:600;">For Repair</td>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;">${forRepairCount}</td>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:600;">Availability Rate</td>
+                <td style="padding:6px 10px;border:1px solid #e2e8f0;">${totalItems ? ((availableCount / totalItems) * 100).toFixed(1) : '0.0'}%</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <!-- Explicit Summary Table (ensures metrics show in PDF even if cards split across pages) -->

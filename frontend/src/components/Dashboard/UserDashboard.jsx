@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { useAuth } from '@/context/useAuth';
 import { inventoryApi } from '@/services/inventoryApi';
+import StatusAnalytics from '@/components/analytics/StatusAnalytics';
 
 /* Layout - themed to match auth pages (gradient + glass) */
 const Wrapper = styled.div`
@@ -104,48 +105,6 @@ const SubNote = styled.small`
   font-size:.6rem;
   color:#64748b;
   letter-spacing:.5px;
-`;
-
-/* Status analytics donut */
-const StatusDonut = styled.div`
-  --size:140px;
-  width:var(--size);
-  height:var(--size);
-  border-radius:50%;
-  background:${p=>p.segments};
-  position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  &::after{
-    content:'';
-    position:absolute;
-    width:58%;
-    height:58%;
-    background:#fff;
-    border-radius:50%;
-    box-shadow:inset 0 0 0 1px #e2e8f0;
-  }
-  span.center{
-    position:absolute;
-    width:60%;
-    text-align:center;
-    font-size:.6rem;
-    font-weight:600;
-    color:#1e293b;
-    line-height:.85rem;
-  }
-`;
-const Legend = styled.ul`
-  list-style:none;
-  margin:0;
-  padding:0;
-  display:flex;
-  flex-direction:column;
-  gap:.4rem;
-  font-size:.6rem;
-  li { display:flex; align-items:center; gap:.45rem; }
-  i { width:12px; height:12px; border-radius:4px; display:inline-block; }
 `;
 
 /* Table */
@@ -385,6 +344,8 @@ const UserDashboard = () => {
   const firstName = (user?.name||'').split(' ')[0] || roleDisplay;
 
   const [items,setItems] = useState([]);
+  // Control how many inventory items are visible in the main list (default 10)
+  const [showAllItems, setShowAllItems] = useState(false);
   const [loading,setLoading] = useState(true);
   const [error,setError] = useState('');
   const [filters,setFilters] = useState({ category:'', status:'' });
@@ -525,43 +486,6 @@ const UserDashboard = () => {
     return () => { active=false; clearInterval(int); };
   }, [user?.id, user?.role]);
 
-  // Unit-based status counts separating available/in_use/for_repair/disposed
-  const unitStatus = useMemo(()=>{
-    const counts = { available:0, in_use:0, for_repair:0, disposed:0 };
-    for (const it of items) {
-      if (it.category === 'equipment') {
-        if (it.status === 'available') counts.available += (it.quantity || 0);
-        else if (it.status === 'in_use') counts.in_use += (it.quantity || 0);
-        else if (it.status === 'for_repair') counts.for_repair += (it.quantity || 0);
-        else if (it.status === 'disposed') counts.disposed += (it.quantity || 0);
-      } else { // supplies
-        if (it.status === 'in_stock') counts.available += (it.quantity || 0);
-        if (it.status === 'for_repair') counts.for_repair += (it.quantity || 0);
-        if (it.status === 'disposed') counts.disposed += (it.quantity || 0);
-      }
-    }
-    return counts;
-  }, [items]);
-  const totalUnits = Math.max(1, unitStatus.available + unitStatus.in_use + unitStatus.for_repair + unitStatus.disposed);
-  // (old palette removed; replaced with unitPalette further below)
-  const unitPalette = {
-    available:'#10b981',
-    in_use:'#6366f1',
-    for_repair:'#f59e0b',
-    disposed:'#475569'
-  };
-  const segments = (()=>{
-  const entries = Object.entries(unitStatus).filter(([,v])=>v>0);
-    let acc=0; const parts=[];
-    entries.forEach(([k,v])=>{
-      const start = acc; const slice = (v/totalUnits)*360; const end = start + slice; acc += slice;
-      parts.push(`${unitPalette[k]||'#94a3b8'} ${start}deg ${end}deg`);
-    });
-    if(!parts.length) parts.push('#e2e8f0 0deg 360deg');
-    return `conic-gradient(${parts.join(',')})`;
-  })();
-  const legendEntries = Object.keys(unitStatus).filter(k=>unitStatus[k]>0).sort((a,b)=>unitStatus[b]-unitStatus[a]);
-
   const formatStatus = (s) => {
     const map = { in_stock:'In Stock', out_of_stock:'Out of Stock', available:'Available', in_use:'In Use', for_repair:'For Repair', disposed:'Disposed' };
     return map[s] || s;
@@ -634,22 +558,9 @@ const UserDashboard = () => {
 
       <Grid>
         <Panel>
-          <PanelTitle>📦 Status Analytics</PanelTitle>
+          <PanelTitle>� Inventory Status Analytics</PanelTitle>
           <Divider />
-          <div style={{ display:'flex', gap:'1.25rem', flexWrap:'wrap', alignItems:'center' }}>
-            <StatusDonut segments={segments}>
-              <span className="center">{totalUnits}\nunits</span>
-            </StatusDonut>
-            <Legend>
-              {legendEntries.length ? legendEntries.map(k => {
-                const labelMap = { available:'Available', in_use:'In Use', for_repair:'For Repair', disposed:'Disposed' };
-                return (
-                  <li key={k}><i style={{ background:unitPalette[k]||'#94a3b8' }} /> {labelMap[k]||k} — <strong>{unitStatus[k]}</strong> ({Math.round(unitStatus[k]/totalUnits*100)}%)</li>
-                );
-              }) : <li style={{ color:'#64748b' }}>No data.</li>}
-            </Legend>
-          </div>
-          <SubNote>Unit-based distribution (equipment split into Available vs In Use). For supplies, available equals remaining stock.</SubNote>
+          <StatusAnalytics items={items} />
         </Panel>
         {['student','teacher','staff'].includes(user?.role) && !!recentRequests.length && (
           <Panel>
@@ -725,6 +636,7 @@ const UserDashboard = () => {
           {loading && !error && <Loading>Loading items...</Loading>}
           {!loading && !error && !items.length && <Empty>No items found.</Empty>}
           {!loading && !error && !!items.length && (
+            <>
             <Table>
               <thead>
                 <tr>
@@ -738,7 +650,7 @@ const UserDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {items.map(it => {
+                {(showAllItems ? items : items.slice(0,10)).map(it => {
                   const meta = badgeMeta(it.status);
                   return (
                     <tr key={it.id}>
@@ -763,6 +675,14 @@ const UserDashboard = () => {
                 })}
               </tbody>
             </Table>
+            {items.length > 10 && (
+              <div style={{ padding:'.55rem .65rem', display:'flex', justifyContent:'center' }}>
+                <ActionBtn type='button' onClick={()=> setShowAllItems(s=>!s)} style={{ fontWeight:700 }}>
+                  {showAllItems ? 'Show First 10' : `See All Items (${items.length})`}
+                </ActionBtn>
+              </div>
+            )}
+            </>
           )}
         </TableWrap>
         </div>

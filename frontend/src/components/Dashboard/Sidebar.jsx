@@ -1,131 +1,8 @@
-// import React from 'react';
-// import { Link, useLocation } from 'react-router-dom';
-// import styled from '@emotion/styled';
-// import avatar from '../../assets/avatar.png';
-
-// const SidebarContainer = styled.div`
-//   width: 250px;
-//   background-color: #1e40af;
-//   min-height: 100vh;
-//   padding: 2rem 1rem;
-//   color: white;
-// `;
-
-// const UserSection = styled.div`
-//   display: flex;
-//   align-items: center;
-//   gap: 1rem;
-//   padding: 0.5rem;
-//   margin-bottom: 2rem;
-// `;
-
-// const UserAvatar = styled.img`
-//   width: 80px;
-//   height: 80px;
-//   border-radius: 50%;
-//   background: white;
-
-// `;
-
-// const UserInfo = styled.div`
-//   h3 {
-//     font-size: 1.2rem;
-//     margin: 0;
-//   }
-//   p {
-//     font-size: 1rem;
-//     opacity: 0.8;
-//     margin: 0;
-//   }
-// `;
-
-// const NavMenu = styled.nav`
-//   display: flex;
-//   flex-direction: column;
-//   gap: 0.5rem;
-// `;
-
-// const NavItem = styled(Link)`
-//   display: flex;
-//   align-items: center;
-//   gap: 1rem;
-//   padding: 0.75rem 1rem;
-//   color: white;
-//   text-decoration: none;
-//   border-radius: 0.5rem;
-//   transition: background-color 0.2s;
-//   background-color: ${props => props.active ? 'rgba(255, 255, 255, 0.1)' : 'transparent'};
-
-//   &:hover {
-//     background-color: rgba(255, 255, 255, 0.1);
-//   }
-
-//   svg {
-//     width: 20px;
-//     height: 20px;
-//   }
-// `;
-
-// const Sidebar = () => {
-//   const location = useLocation();
-
-//   return (
-//     <SidebarContainer>
-//       <UserSection>
-//         <UserAvatar src={avatar} alt="User" />
-//         <UserInfo>
-//           <h3>Welcome,</h3>
-//           <p>Mochii</p>
-//         </UserInfo>
-//       </UserSection>
-
-//       <NavMenu>
-//         <NavItem to="/dashboard" active={location.pathname === '/dashboard'}>
-//           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-//           </svg>
-//           Dashboard
-//         </NavItem>
-
-//         <NavItem to="/voting" active={location.pathname === '/voting'}>
-//           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-//           </svg>
-//           Voting & Requests
-//         </NavItem>
-
-//         <NavItem to="/inventory" active={location.pathname === '/inventory'}>
-//           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-//           </svg>
-//           Inventory
-//         </NavItem>
-
-//         <NavItem to="/support" active={location.pathname === '/support'}>
-//           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-//           </svg>
-//           Contact & Support
-//         </NavItem>
-
-//         <NavItem to="/about-us" active={location.pathname === '/about-us'}>
-//           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-//           </svg>
-//           About Us
-//         </NavItem>
-//       </NavMenu>
-//     </SidebarContainer>
-//   );
-// };
-
-// export default Sidebar; 
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from '@emotion/styled';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/useAuth';
-import avatar from '@/assets/avatar.png';
+import { getAvatarUrl } from '@/utils/avatarUtils';
 import { roleTheme } from '@/theme/roleTheme';
 
 const SidebarWrapper = styled.aside`
@@ -133,17 +10,22 @@ const SidebarWrapper = styled.aside`
   background:${p => p.$bg || '#17348c'};
   color:#fff;
   position:fixed;
-  top:0;
-  left:0;
+  top:0; left:0;
   height:100vh;
-  display:flex;
-  flex-direction:column;
-  padding:2rem 1rem;
-  overflow-y:auto;
-  overscroll-behavior:contain;
-  scrollbar-width:thin;
+  display:flex; flex-direction:column;
+  padding:2rem 1rem 3rem;
+  overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin;
   box-shadow:2px 0 8px -2px rgba(0,0,0,.15);
-  z-index:120;
+  z-index:220;
+  transition:transform .45s cubic-bezier(.4,.8,.3,1), box-shadow .45s;
+  /* desktop default */
+  transform:translateX(0);
+  @media (max-width: 860px){
+    width:min(78%,300px);
+    transform:translateX(${p=>p.$open? '0':'-110%'});
+    box-shadow:${p=>p.$open? '4px 0 24px -4px rgba(0,0,0,.35)':''};
+    backdrop-filter:${p=>p.$open? 'blur(4px)':''};
+  }
 `;
 
 const UserSection = styled.div`
@@ -226,7 +108,13 @@ const Icon = ({ name }) => {
   }
 };
 
-const Sidebar = () => {
+const CloseBar = styled.button`
+  position:absolute; top:.85rem; right:.85rem; display:none; border:none; background:rgba(255,255,255,.15); color:#fff; width:34px; height:34px; border-radius:10px; font-size:1.05rem; cursor:pointer; backdrop-filter:blur(6px);
+  @media (max-width:860px){ display:inline-flex; align-items:center; justify-content:center; }
+  &:hover{ background:rgba(255,255,255,.25); }
+`;
+
+const Sidebar = ({ open=false, onClose }) => {
   const location = useLocation();
   const { role, user, logout } = useAuth();
 
@@ -237,18 +125,21 @@ const Sidebar = () => {
       { to: '/dashboard', label: 'Dashboard', icon: 'menu' },
       { to: '/requests', label: 'Requests', icon: 'inbox' },
       { to: '/voting', label: 'Voting', icon: 'vote' },
+      { to: '/about', label: 'About', icon: 'report' },
       { to: '/profile', label: 'Profile', icon: 'user' },
     ],
     teacher: [
       { to: '/dashboard', label: 'Dashboard', icon: 'menu' },
       { to: '/requests', label: 'Requests', icon: 'inbox' },
       { to: '/voting', label: 'Voting', icon: 'vote' },
+      { to: '/about', label: 'About', icon: 'report' },
       { to: '/profile', label: 'Profile', icon: 'user' },
     ],
     staff: [
       { to: '/dashboard', label: 'Dashboard', icon: 'menu' },
       { to: '/requests', label: 'Requests', icon: 'inbox' },
       { to: '/voting', label: 'Voting', icon: 'vote' },
+      { to: '/about', label: 'About', icon: 'report' },
       { to: '/profile', label: 'Profile', icon: 'user' },
     ],
     manager: [
@@ -257,7 +148,7 @@ const Sidebar = () => {
       { to: '/manager/claims', label: 'Claims', icon: 'check' },
       { to: '/manager/returns', label: 'Returns', icon: 'history' },
       { to: '/manage-requests', label: 'Requests', icon: 'inbox' },
-      { to: '/notifications', label: 'Notifications', icon: 'bell' },
+      { to: '/manager/voting', label: 'Voting', icon: 'vote' },
       { to: '/profile', label: 'Profile', icon: 'user' },
     ],
     admin: [
@@ -265,7 +156,7 @@ const Sidebar = () => {
       { to: '/admin/inventory', label: 'Inventory Overview', icon: 'box' },
       { to: '/manage-requests', label: 'Request Oversight', icon: 'check' },
       { to: '/user-management', label: 'User Management', icon: 'users' },
-      { to: '/analytics', label: 'Reports & Analytics', icon: 'chart' },
+      { to: '/about', label: 'About', icon: 'report' },
       { to: '/settings', label: 'Settings', icon: 'gear' },
       { to: '/profile', label: 'Profile', icon: 'user' },
     ],
@@ -273,10 +164,19 @@ const Sidebar = () => {
 
   const menu = menusByRole[role] || menusByRole.student;
 
+  // Auto-close on route change (mobile only)
+  useEffect(()=>{
+    if(onClose && window.innerWidth <= 860){
+      onClose();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[location.pathname]);
+
   return (
-    <SidebarWrapper $bg={theme.sidebarBg}>
+    <SidebarWrapper $bg={theme.sidebarBg} $open={open}>
+      <CloseBar aria-label="Close navigation" onClick={onClose}>×</CloseBar>
       <UserSection>
-        <UserAvatar src={avatar} alt="User avatar" />
+        <UserAvatar src={getAvatarUrl(user)} alt="User avatar" />
         <UserInfo>
           <h3 style={{margin:0, fontSize:'.7rem', letterSpacing:'.5px', textTransform:'uppercase', fontWeight:700}}>Welcome</h3>
           <p style={{margin:'.15rem 0 0', fontWeight:600, fontSize:'.8rem', lineHeight:'.95rem'}} title={user?.fullName || user?.name}>{(user?.fullName || user?.name || 'User')}</p>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { inventoryApi } from '@/services/inventoryApi';
+import StatusAnalytics from '@/components/analytics/StatusAnalytics';
 
 // Add CSS animations
 const styles = `
@@ -291,6 +292,10 @@ export default function Dashboard() {
 
           <ModernPanel title="⚙️ Equipment Utilization" gridColumn="span 12">
             <EquipmentUtilization analytics={analytics} items={inventoryItems} />
+          </ModernPanel>
+
+          <ModernPanel title="📊 Equipment & Supplies Status" gridColumn="span 12">
+            <StatusAnalytics items={inventoryItems} />
           </ModernPanel>
         </div>
 
@@ -844,102 +849,97 @@ function groupBy(arr, fn) {
 
 // ============ Inventory Items List Component ============
 function InventoryItemsList({ items, loading }) {
+  const [expanded, setExpanded] = React.useState({}); // category => bool
   if (loading) return <div style={emptyStyle}>Loading inventory items...</div>;
   if (!items || !items.length) return <div style={emptyStyle}>No inventory items found.</div>;
-  
-  // Group items by category
   const grouped = groupBy(items, item => item.category);
-  
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:'.8rem', maxHeight:'320px', overflowY:'auto' }}>
-      {Object.entries(grouped).map(([category, categoryItems]) => (
-        <div key={category} style={{
-          border:'1px solid #e2e8f0',
-          background:'#fff',
-          borderRadius:14,
-          padding:'.7rem .75rem .75rem',
-          boxShadow:'0 3px 10px -6px rgba(0,0,0,.06)'
-        }}>
-          <div style={{ 
-            display:'flex', 
-            justifyContent:'space-between', 
-            alignItems:'center',
-            marginBottom:'.6rem',
-            paddingBottom:'.4rem',
-            borderBottom:'1px solid #f1f5f9'
+      {Object.entries(grouped).map(([category, categoryItems]) => {
+        const showAll = expanded[category];
+        const visible = showAll ? categoryItems : categoryItems.slice(0,10);
+        return (
+          <div key={category} style={{
+            border:'1px solid #e2e8f0',
+            background:'#fff',
+            borderRadius:14,
+            padding:'.7rem .75rem .75rem',
+            boxShadow:'0 3px 10px -6px rgba(0,0,0,.06)'
           }}>
-            <strong style={{ 
-              fontSize:'.65rem', 
-              textTransform:'uppercase', 
-              letterSpacing:.6,
-              color:'#475569'
+            <div style={{
+              display:'flex',
+              justifyContent:'space-between',
+              alignItems:'center',
+              marginBottom:'.6rem',
+              paddingBottom:'.4rem',
+              borderBottom:'1px solid #f1f5f9'
             }}>
-              {category}
-            </strong>
-            <span style={{ 
-              fontSize:'.5rem', 
-              fontWeight:600, 
-              background:'#f1f5f9', 
-              padding:'.2rem .45rem', 
-              borderRadius:20,
-              color:'#64748b'
-            }}>
-              {categoryItems.length} items
-            </span>
-          </div>
-          
-          <div style={{ display:'flex', flexDirection:'column', gap:'.4rem' }}>
-            {categoryItems.slice(0, 5).map(item => (
-              <div key={item.id} style={{
-                display:'flex',
-                justifyContent:'space-between',
-                alignItems:'center',
-                padding:'.4rem .5rem',
-                background:'#f8fafc',
-                borderRadius:8,
-                fontSize:'.55rem'
-              }}>
-                <div style={{ display:'flex', flexDirection:'column', gap:'.1rem', flex:1 }}>
-                  <span style={{ fontWeight:600, color:'#1e293b' }}>{item.name}</span>
-                  {item.description && (
-                    <span style={{ 
-                      fontSize:'.5rem', 
-                      color:'#64748b',
-                      overflow:'hidden',
-                      textOverflow:'ellipsis',
-                      whiteSpace:'nowrap',
-                      maxWidth:'200px'
-                    }}>
-                      {item.description}
-                    </span>
-                  )}
-                </div>
-                <div style={{ display:'flex', alignItems:'center', gap:'.4rem' }}>
-                  <span style={{ 
-                    fontSize:'.5rem', 
-                    fontWeight:600,
-                    color:'#475569'
-                  }}>
-                    Qty: {item.quantity || 0}
-                  </span>
-                  <StatusBadge status={item.status} category={item.category} />
-                </div>
-              </div>
-            ))}
-            {categoryItems.length > 5 && (
-              <div style={{
+              <strong style={{
+                fontSize:'.65rem',
+                textTransform:'uppercase',
+                letterSpacing:.6,
+                color:'#475569'
+              }}>{category}</strong>
+              <span style={{
                 fontSize:'.5rem',
-                color:'#64748b',
-                textAlign:'center',
-                padding:'.3rem',
-                fontStyle:'italic'
-              }}>
-                + {categoryItems.length - 5} more items
-              </div>
-            )}
+                fontWeight:600,
+                background:'#f1f5f9',
+                padding:'.2rem .45rem',
+                borderRadius:20,
+                color:'#64748b'
+              }}>{categoryItems.length} items</span>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:'.4rem' }}>
+              {visible.map(item => (
+                <div key={item.id} style={{
+                  display:'flex',
+                  justifyContent:'space-between',
+                  alignItems:'center',
+                  padding:'.4rem .5rem',
+                  background:'#f8fafc',
+                  borderRadius:8,
+                  fontSize:'.55rem'
+                }}>
+                  <div style={{ display:'flex', flexDirection:'column', gap:'.1rem', flex:1 }}>
+                    <span style={{ fontWeight:600, color:'#1e293b' }}>{item.name}</span>
+                    {item.description && (
+                      <span style={{
+                        fontSize:'.5rem',
+                        color:'#64748b',
+                        overflow:'hidden',
+                        textOverflow:'ellipsis',
+                        whiteSpace:'nowrap',
+                        maxWidth:'200px'
+                      }}>{item.description}</span>
+                    )}
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:'.4rem' }}>
+                    <span style={{ fontSize:'.5rem', fontWeight:600, color:'#475569' }}>Qty: {item.quantity || 0}</span>
+                    <StatusBadge status={item.status} category={item.category} />
+                  </div>
+                </div>
+              ))}
+              {categoryItems.length > 10 && (
+                <button
+                  type='button'
+                  onClick={()=> setExpanded(e=>({...e, [category]: !showAll }))}
+                  style={{
+                    marginTop:'.25rem',
+                    background:'#f1f5f9',
+                    border:'1px solid #e2e8f0',
+                    padding:'.35rem .6rem',
+                    borderRadius:8,
+                    fontSize:'.55rem',
+                    fontWeight:600,
+                    cursor:'pointer',
+                    color:'#334155'
+                  }}
+                >{showAll ? 'Show First 10' : `See All (${categoryItems.length})`}</button>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

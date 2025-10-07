@@ -341,7 +341,53 @@ export async function updateItem(id, data, userId) {
 }
 
 export async function listStatusHistory(itemId) {
-  const { rows } = await pool.query(`SELECT ${HISTORY_FIELDS} FROM inventory_item_status_history WHERE item_id=$1 ORDER BY id DESC`, [itemId]);
+  const query = `
+    SELECT 
+      h.id,
+      h.item_id AS "itemId",
+      h.old_status AS "oldStatus", 
+      h.new_status AS "newStatus",
+      h.changed_by AS "changedBy",
+      h.changed_at AS "changedAt",
+      u.full_name AS "changedByName",
+      u.role AS "changedByRole",
+      u.email AS "changedByEmail",
+      'status_change' as "actionType",
+      NULL as "claimQuantity",
+      NULL as "approvedByName",
+      NULL as "approvedByRole"
+    FROM inventory_item_status_history h
+    LEFT JOIN users u ON h.changed_by = u.id
+    WHERE h.item_id = $1 
+    
+    UNION ALL
+    
+    SELECT 
+      NULL as id,
+      c.item_id AS "itemId",
+      NULL as "oldStatus",
+      CASE 
+        WHEN c.status = 'approved' THEN 'claimed'
+        WHEN c.status = 'rejected' THEN 'claim_rejected'
+        ELSE 'claim_pending'
+      END as "newStatus", 
+      c.requested_by AS "changedBy",
+      COALESCE(c.decided_at, c.created_at) AS "changedAt",
+      req_user.full_name AS "changedByName",
+      req_user.role AS "changedByRole", 
+      req_user.email AS "changedByEmail",
+      'claim' as "actionType",
+      c.quantity as "claimQuantity",
+      app_user.full_name AS "approvedByName",
+      app_user.role AS "approvedByRole"
+    FROM inventory_claims c
+    LEFT JOIN users req_user ON c.requested_by = req_user.id
+    LEFT JOIN users app_user ON c.approved_by = app_user.id
+    WHERE c.item_id = $1
+    
+    ORDER BY "changedAt" DESC
+  `;
+  const { rows } = await pool.query(query, [itemId]);
   return rows;
 }
 
@@ -649,6 +695,85 @@ export async function listApprovedRequestsForVoting(user) {
      WHERE r.status='approved' AND r.department = $1 AND r.course = $2
      ORDER BY r.decided_at DESC NULLS LAST, r.id DESC`, [user.department||'', user.course||'', user.id]);
   return rows;
+}
+
+// Manager weekly top voted request (current ISO week)
+export async function weeklyTopRequestForManager(user) {
+  if (!user || user.role !== 'manager') return null;
+  const sql = `WITH week_bounds AS (
+                 SELECT date_trunc('week', NOW()) AS ws, date_trunc('week', NOW()) + INTERVAL '7 days' AS we
+               ),
+               votes_week AS (
+                 SELECT r.id, COUNT(v.id)::int AS votes_week
+                 FROM item_requests r
+                 LEFT JOIN item_request_votes v ON v.request_id = r.id
+                 JOIN week_bounds wb ON v.created_at >= wb.ws AND v.created_at < wb.we
+                 WHERE r.status='approved' AND r.department=$1 AND r.course=$2
+                 GROUP BY r.id
+               ),
+               votes_total AS (
+                 SELECT r.id, COUNT(v.id)::int AS votes_total
+                 FROM item_requests r
+                 LEFT JOIN item_request_votes v ON v.request_id = r.id
+                 WHERE r.status='approved' AND r.department=$1 AND r.course=$2
+                 GROUP BY r.id
+               )
+               SELECT r.*, COALESCE(vw.votes_week,0) AS votes_week, COALESCE(vt.votes_total,0) AS votes_total,
+                      EXTRACT(WEEK FROM NOW())::int AS week_number,
+                      TO_CHAR(date_trunc('week', NOW()), 'YYYY-MM-DD') AS week_start
+               FROM item_requests r
+               LEFT JOIN votes_week vw ON vw.id = r.id
+               LEFT JOIN votes_total vt ON vt.id = r.id
+               WHERE r.status='approved' AND r.department=$1 AND r.course=$2
+               ORDER BY vw.votes_week DESC, vt.votes_total DESC, r.id DESC
+               LIMIT 1;`;
+  const { rows } = await pool.query(sql, [user.department||'', user.course||'']);
+  return rows[0] || null;
+}
+
+export async function deleteItemRequest(id, user) {
+  if (!user || !['manager','admin'].includes(user.role)) throw new Error('Forbidden');
+  const { rows } = await pool.query('SELECT * FROM item_requests WHERE id=$1', [id]);
+  const req = rows[0];
+  if (!req) throw new Error('Not found');
+  if (user.role==='manager' && ((req.department||'').toLowerCase() !== (user.department||'').toLowerCase() || (req.course||'').toLowerCase() !== (user.course||'').toLowerCase())) {
+    throw new Error('Forbidden');
+  }
+  // Allow delete only if approved (still in voting) or pending (cleanup) per spec focus.
+  if (!['approved','pending'].includes(req.status)) throw new Error('Cannot delete in current status');
+  await pool.query('DELETE FROM item_requests WHERE id=$1', [id]);
+  return { success:true };
+}
+
+export async function convertRequestToInventory(id, user) {
+  if (!user || !['manager','admin'].includes(user.role)) throw new Error('Forbidden');
+  const { rows } = await pool.query('SELECT * FROM item_requests WHERE id=$1', [id]);
+  const req = rows[0];
+  if (!req) throw new Error('Not found');
+  if (req.status !== 'approved') throw new Error('Only approved requests can be converted');
+  if (user.role==='manager' && ((req.department||'').toLowerCase() !== (user.department||'').toLowerCase() || (req.course||'').toLowerCase() !== (user.course||'').toLowerCase())) {
+    throw new Error('Forbidden');
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Create inventory item
+    const category = (req.category||'supplies').toLowerCase();
+    const status = category === 'equipment' ? 'available' : 'in_stock';
+    const { rows: itemRows } = await client.query(
+      `INSERT INTO inventory_items (name, description, category, status, quantity, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       RETURNING ${FIELDS}`,
+      [req.item_name, req.description||null, category, status, req.quantity||1, user.id]
+    );
+    // Remove request so it no longer appears in voting
+    await client.query('DELETE FROM item_requests WHERE id=$1', [id]);
+    await client.query('COMMIT');
+    return { item: itemRows[0] };
+  } catch(e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally { client.release(); }
 }
 
 // =====================

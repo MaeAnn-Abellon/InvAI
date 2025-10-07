@@ -170,17 +170,60 @@ export default function InventoryPage() {
               <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'.65rem', marginBottom:'.75rem' }}>
                 <thead>
                   <tr style={{ textAlign:'left', background:'#f1f5f9' }}>
-                    <th style={th}>Changed</th>
-                    <th style={th}>Old</th>
-                    <th style={th}>New</th>
+                    <th style={th}>Date</th>
+                    <th style={th}>Action</th>
+                    <th style={th}>User</th>
+                    <th style={th}>Details</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {historyModal.rows.map(r => (
-                    <tr key={r.id} style={{ borderBottom:'1px solid #e2e8f0' }}>
+                  {historyModal.rows.map((r, index) => (
+                    <tr key={r.id || index} style={{ borderBottom:'1px solid #e2e8f0' }}>
                       <td style={td}>{new Date(r.changedAt).toLocaleString()}</td>
-                      <td style={td}>{r.oldStatus || '-'}</td>
-                      <td style={td}>{r.newStatus}</td>
+                      <td style={td}>
+                        {r.actionType === 'claim' ? (
+                          <span style={{
+                            background: r.newStatus === 'claimed' ? '#dcfce7' : r.newStatus === 'claim_rejected' ? '#fee2e2' : '#fef9c3',
+                            color: r.newStatus === 'claimed' ? '#166534' : r.newStatus === 'claim_rejected' ? '#b91c1c' : '#92400e',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '0.6rem',
+                            fontWeight: '500'
+                          }}>
+                            {r.newStatus === 'claimed' ? 'Claimed' : 
+                             r.newStatus === 'claim_rejected' ? 'Claim Rejected' : 
+                             'Claim Pending'}
+                          </span>
+                        ) : (
+                          <span>{r.oldStatus ? `${r.oldStatus} → ${r.newStatus}` : r.newStatus}</span>
+                        )}
+                      </td>
+                      <td style={td}>
+                        {r.changedByName ? (
+                          <div>
+                            <div style={{ fontWeight: '600' }}>{r.changedByName}</div>
+                            <div style={{ color: '#64748b', fontSize: '0.6rem' }}>
+                              {r.changedByRole} {r.changedByEmail && `• ${r.changedByEmail}`}
+                            </div>
+                          </div>
+                        ) : (
+                          <span style={{ color: '#94a3b8' }}>Unknown</span>
+                        )}
+                      </td>
+                      <td style={td}>
+                        {r.actionType === 'claim' ? (
+                          <div>
+                            {r.claimQuantity && <div>Qty: {r.claimQuantity}</div>}
+                            {r.approvedByName && (
+                              <div style={{ color: '#64748b', fontSize: '0.6rem' }}>
+                                {r.newStatus === 'claimed' ? 'Approved' : 'Rejected'} by: {r.approvedByName}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span>Status change</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

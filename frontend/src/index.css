@@ -2,4 +2,9 @@ html, body {
   height:100%;
   overflow-y:auto;
   overscroll-behavior-y:contain;
+  font-family:'Roboto', Arial, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
 }
+
+* { font-family:inherit; }

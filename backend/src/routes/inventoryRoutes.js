@@ -1,6 +1,6 @@
 import express from 'express';
 import { authRequired, managerOrAdmin } from '../middleware/auth.js';
-import { listItems, listItemsForUser, getItem, getItemForUser, createItem, updateItem, deleteItem, listStatusHistory, createClaim, listClaims, approveClaim, listClaimsPaged, requestEquipmentReturn, approveEquipmentReturn, listUserClaimedEquipment, listPendingReturns, listClaimsByUser, createItemRequest, listItemRequests, decideItemRequest, castVoteOnRequest, listApprovedRequestsForVoting, forecastDepletion, monthlyInventoryAnalytics, adminInventoryOverview, adminInventoryOptions, adminUserAnalytics, adminClaimAnalytics, adminVoteAnalytics } from '../models/inventoryModel.js';
+import { listItems, listItemsForUser, getItem, getItemForUser, createItem, updateItem, deleteItem, listStatusHistory, createClaim, listClaims, approveClaim, listClaimsPaged, requestEquipmentReturn, approveEquipmentReturn, listUserClaimedEquipment, listPendingReturns, listClaimsByUser, createItemRequest, listItemRequests, decideItemRequest, castVoteOnRequest, listApprovedRequestsForVoting, forecastDepletion, monthlyInventoryAnalytics, adminInventoryOverview, adminInventoryOptions, adminUserAnalytics, adminClaimAnalytics, adminVoteAnalytics, weeklyTopRequestForManager, deleteItemRequest, convertRequestToInventory } from '../models/inventoryModel.js';
 import { pool } from '../db.js';
 
 const router = express.Router();
@@ -273,6 +273,41 @@ router.get('/requests/approved/voting', async (req,res) => {
     const rows = await listApprovedRequestsForVoting(req.user);
     res.json({ requests: rows });
   } catch(e){ res.status(400).json({ error:e.message }); }
+});
+
+// Manager weekly top voted request (read-only)
+router.get('/requests/voting/weekly-top', async (req,res) => {
+  try {
+    if (req.user.role !== 'manager') return res.status(403).json({ error:'Forbidden' });
+    const top = await weeklyTopRequestForManager(req.user);
+    res.json({ top });
+  } catch(e){ res.status(400).json({ error: e.message || 'Weekly top error' }); }
+});
+
+// Delete a request (approved or pending) by manager/admin
+router.delete('/requests/:id', managerOrAdmin, async (req,res) => {
+  try {
+    await deleteItemRequest(req.params.id, req.user);
+    res.status(204).end();
+  } catch(e){
+    const msg = e.message || 'Delete failed';
+    let code = 400;
+    if (/not found/i.test(msg)) code = 404; else if (/forbidden/i.test(msg)) code = 403; else if (/cannot delete/i.test(msg)) code = 409;
+    res.status(code).json({ error: msg });
+  }
+});
+
+// Convert approved request to inventory item
+router.post('/requests/:id/convert', managerOrAdmin, async (req,res) => {
+  try {
+    const created = await convertRequestToInventory(req.params.id, req.user);
+    res.json(created);
+  } catch(e){
+    const msg = e.message || 'Convert failed';
+    let code = 400;
+    if (/not found/i.test(msg)) code=404; else if(/forbidden/i.test(msg)) code=403; else if(/approved/i.test(msg)===false) code=409;
+    res.status(code).json({ error: msg });
+  }
 });
 
 router.post('/requests/:id/vote', async (req,res) => {

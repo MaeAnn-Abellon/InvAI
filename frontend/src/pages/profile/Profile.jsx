@@ -315,7 +315,8 @@ import styled from '@emotion/styled';
 import { PageSurface, GradientHeading, GlassPanel, PrimaryButton, SubNote as GSubNote, Divider as GDivider } from '@/components/ui/Glass';
 import { useAuth } from '@/context/useAuth';
 import { inventoryApi } from '@/services/inventoryApi';
-import defaultAvatar from '@/assets/avatar.png'; // add your default image
+import { fetchManagerActivity } from '@/services/managerApi';
+import { getAvatarUrl } from '@/utils/avatarUtils';
 
 const PageContainer = styled(PageSurface)`padding:2rem 2.25rem 3rem; max-width:1100px; margin:0 auto;`;
 
@@ -413,7 +414,7 @@ const SmallNote = styled.small`
 `;
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, refreshAuth } = useAuth();
 
   // NEW state for avatar change
   const fileRef = useRef(null);
@@ -447,6 +448,8 @@ export default function Profile() {
       URL.revokeObjectURL(preview);
       setPhotoFile(null); setPreview(null);
       pushToast('Avatar updated');
+      // Refresh user data to update avatar in sidebar and other components
+      if (refreshAuth) refreshAuth();
     } catch(e){ alert(e.message); }
     finally { setUploading(false); }
   };
@@ -511,6 +514,9 @@ export default function Profile() {
 
   // Derived stats (requests submitted, votes cast)
   const [stats,setStats] = useState({ requests:0, votes:0 });
+  const [managerActivity, setManagerActivity] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+
   useEffect(()=>{
     let active=true;
     (async()=>{
@@ -524,6 +530,26 @@ export default function Profile() {
     })();
     return ()=>{ active=false; };
   },[user?.id]);
+
+  // Fetch manager activity if user is a manager
+  useEffect(() => {
+    if (user?.role === 'manager' && user?.id) {
+      let active = true;
+      setActivityLoading(true);
+      (async () => {
+        try {
+          const activity = await fetchManagerActivity(user.id);
+          if (active) setManagerActivity(activity);
+        } catch (error) {
+          console.error('Failed to fetch manager activity:', error);
+          if (active) setManagerActivity([]);
+        } finally {
+          if (active) setActivityLoading(false);
+        }
+      })();
+      return () => { active = false; };
+    }
+  }, [user?.id, user?.role]);
 
   return (
     <>
@@ -552,7 +578,7 @@ export default function Profile() {
         <SectionTitle>Profile Photo</SectionTitle>
         <PhotoRow>
           <Avatar
-            src={preview || user?.avatarUrl || defaultAvatar}
+            src={preview || getAvatarUrl(user)}
             alt="Profile"
           />
           <PhotoButtons>
@@ -592,16 +618,28 @@ export default function Profile() {
         <SmallNote>JPG/PNG up to 2MB. Will persist after backend upload integration.</SmallNote>
       </Section>
 
-      {/* NEW Manager Activity Section */}
+      {/* Manager Activity Section */}
       {user?.role === 'manager' && (
         <Section>
           <SectionTitle>Recent Manager Activity</SectionTitle>
-          <ul style={{listStyle:'none', margin:0, padding:0, display:'flex', flexDirection:'column', gap:'.55rem'}}>
-            <li style={activityStyle}>Last Excel upload: <strong>IT_inventory.xlsx</strong> (2h ago)</li>
-            <li style={activityStyle}>Last approved request: #101 (Markers)</li>
-            <li style={activityStyle}>Last edit: Updated Headsets stock (yesterday)</li>
-          </ul>
-          <small style={{fontSize:'.55rem', color:'#64748b'}}>Replace with API data (GET /api/manager/activity).</small>
+          {activityLoading ? (
+            <div style={{padding: '1rem', textAlign: 'center', color: '#64748b', fontSize: '0.9rem'}}>
+              Loading activity...
+            </div>
+          ) : managerActivity.length > 0 ? (
+            <ul style={{listStyle:'none', margin:0, padding:0, display:'flex', flexDirection:'column', gap:'.55rem'}}>
+              {managerActivity.map((activity, index) => (
+                <li key={index} style={activityStyle}>
+                  <span>{activity.description}</span>
+                  <strong style={{fontSize: '0.8rem', color: '#6366f1'}}>{activity.timeAgo}</strong>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div style={{padding: '1rem', textAlign: 'center', color: '#64748b', fontSize: '0.9rem'}}>
+              No recent activity found. Start managing inventory to see your activity here.
+            </div>
+          )}
         </Section>
       )}
 
