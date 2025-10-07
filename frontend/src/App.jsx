@@ -15,7 +15,8 @@ import UserManagement from '@/pages/users/UserManagement';
 import Notifications from '@/pages/notifications/Notifications';
 import Profile from '@/pages/profile/Profile';
 import Login from '@/components/Login';
-import Signup from '@/components/Signup';
+// NOTE: Case-sensitive path fix for Linux/Vercel: file is SignUp.jsx (not Signup.jsx)
+import Signup from '@/components/SignUp';
 import InventoryRoute from '@/pages/inventory/InventoryRoute';
 import Landing from '@/components/LandingPage';  
 import ManagerForecasts from '@/pages/manager/ManagerForecasts';
