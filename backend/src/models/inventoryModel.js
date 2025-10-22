@@ -423,6 +423,17 @@ export async function listClaims(filters = {}) {
   if (filters.itemId) { clauses.push(`c.item_id = $${i++}`); values.push(filters.itemId); }
   if (filters.requestedBy) { clauses.push(`c.requested_by = $${i++}`); values.push(filters.requestedBy); }
   if (filters.status) { clauses.push(`c.status = $${i++}`); values.push(filters.status); }
+  // If currentUser is a manager, scope to claims requested by users in the same department
+  if (filters.currentUser && filters.currentUser.role === 'manager') {
+    const mgrDept = (filters.currentUser.department || '').toString().trim().toLowerCase();
+    if (mgrDept) {
+      clauses.push(`COALESCE(lower(TRIM(u.department)),'') = $${i++}`);
+      values.push(mgrDept);
+    } else {
+      // manager without department should see none
+      clauses.push('1=0');
+    }
+  }
   const where = clauses.length ? 'WHERE ' + clauses.join(' AND ') : '';
   const { rows } = await pool.query(
     `SELECT c.*, u.username AS requested_by_username, i.name AS item_name
