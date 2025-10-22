@@ -463,9 +463,9 @@ export async function listClaimsPaged(filters = {}) {
   if (filters.currentUser && filters.currentUser.role === 'manager') {
     const mgrDept = (filters.currentUser.department || '').toString().trim();
     if (mgrDept) {
-      // join on users to filter by department (case-insensitive)
-      clauses.push(`(EXISTS (SELECT 1 FROM users uu WHERE uu.id = c.requested_by AND COALESCE(lower(uu.department),'') = lower($${i})))`);
-      values.push(mgrDept.toLowerCase());
+      // Use the joined users alias `u` to filter by department (case-insensitive, trimmed)
+      clauses.push(`COALESCE(lower(TRIM(u.department)),'') = $${i}`);
+      values.push(mgrDept.toLowerCase().trim());
       i++;
     } else {
       // Manager has no department assigned: return no rows to avoid broad exposure
