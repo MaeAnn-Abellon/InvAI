@@ -36,7 +36,8 @@ router.get('/', async (req,res) => {
 router.get('/claims', managerOrAdmin, async (req,res) => {
   const { page, limit, status, itemStatus } = req.query;
   try {
-    const data = await listClaimsPaged({ status: status || 'pending', page, limit, itemStatus });
+    // Pass the current user to allow manager-scoped filtering inside the model
+    const data = await listClaimsPaged({ status: status || 'pending', page, limit, itemStatus, currentUser: req.user });
     res.json(data);
   } catch(e) {
     res.status(400).json({ error: e.message || 'Cannot list claims' });

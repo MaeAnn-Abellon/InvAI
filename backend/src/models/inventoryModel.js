@@ -459,6 +459,13 @@ export async function listClaimsPaged(filters = {}) {
   if (filters.requestedBy) { clauses.push(`c.requested_by = $${i++}`); values.push(filters.requestedBy); }
   if (filters.status) { clauses.push(`c.status = $${i++}`); values.push(filters.status); }
   if (filters.itemStatus) { clauses.push(`i.status = $${i++}`); values.push(filters.itemStatus); }
+  // If a currentUser is provided and is a manager, scope to claims requested by users from the same department
+  if (filters.currentUser && filters.currentUser.role === 'manager') {
+    // join on users to filter by department
+    clauses.push(`(EXISTS (SELECT 1 FROM users uu WHERE uu.id = c.requested_by AND COALESCE(lower(uu.department),'') = COALESCE(lower($${i}),'')))`);
+    values.push(filters.currentUser.department || '');
+    i++;
+  }
   const where = clauses.length ? 'WHERE ' + clauses.join(' AND ') : '';
   const baseQuery = `FROM inventory_claims c
       LEFT JOIN users u ON u.id = c.requested_by
