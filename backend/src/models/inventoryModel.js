@@ -461,10 +461,16 @@ export async function listClaimsPaged(filters = {}) {
   if (filters.itemStatus) { clauses.push(`i.status = $${i++}`); values.push(filters.itemStatus); }
   // If a currentUser is provided and is a manager, scope to claims requested by users from the same department
   if (filters.currentUser && filters.currentUser.role === 'manager') {
-    // join on users to filter by department
-    clauses.push(`(EXISTS (SELECT 1 FROM users uu WHERE uu.id = c.requested_by AND COALESCE(lower(uu.department),'') = COALESCE(lower($${i}),'')))`);
-    values.push(filters.currentUser.department || '');
-    i++;
+    const mgrDept = (filters.currentUser.department || '').toString().trim();
+    if (mgrDept) {
+      // join on users to filter by department (case-insensitive)
+      clauses.push(`(EXISTS (SELECT 1 FROM users uu WHERE uu.id = c.requested_by AND COALESCE(lower(uu.department),'') = lower($${i})))`);
+      values.push(mgrDept.toLowerCase());
+      i++;
+    } else {
+      // Manager has no department assigned: return no rows to avoid broad exposure
+      clauses.push('1=0');
+    }
   }
   const where = clauses.length ? 'WHERE ' + clauses.join(' AND ') : '';
   const baseQuery = `FROM inventory_claims c
