@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { inventoryApi } from '@/services/inventoryApi';
 import StatusAnalytics from '@/components/analytics/StatusAnalytics';
+import { useAuth } from '@/context/useAuth';
 
 // Add CSS animations
 const styles = `
@@ -33,6 +34,7 @@ if (typeof document !== 'undefined') {
 }
 
 export default function Dashboard() {
+  const { user: currentUser } = useAuth();
   // Removed recentRequests (per requirement)
   // Removed forecastHighlights & notifications (unused mock content)
   const [analytics, setAnalytics] = useState({ items:[], claims:[], returns:{ pending_returns:0 }});
@@ -58,7 +60,7 @@ export default function Dashboard() {
         setAnalytics(data);
       } catch(e){ console.error('analytics error', e); }
     })();
-  }, []);
+  }, [currentUser?.role, currentUser?.department]);
 
   // Fetch inventory items
   useEffect(()=>{
@@ -70,7 +72,7 @@ export default function Dashboard() {
       } catch(e){ console.error('inventory error', e); }
       finally { setInventoryLoading(false); }
     })();
-  }, []);
+  }, [currentUser?.role, currentUser?.department]);
 
   // Fetch requests data
   useEffect(()=>{
@@ -82,7 +84,7 @@ export default function Dashboard() {
       } catch(e){ console.error('requests error', e); }
       finally { setRequestsLoading(false); }
     })();
-  }, []);
+  }, [currentUser?.role, currentUser?.department]);
 
   // Fetch claims data
   useEffect(()=>{
@@ -90,11 +92,17 @@ export default function Dashboard() {
       setClaimsLoading(true);
       try {
         const data = await inventoryApi.listPendingClaims();
-        setClaims(data.claims || []);
+        const raw = data.claims || [];
+        // client-side guard: only show claims in the manager's department
+        const mgrDept = (currentUser?.department || '').toString().trim().toLowerCase();
+        const visible = (currentUser?.role === 'manager' && mgrDept)
+          ? raw.filter(c => ((c.requested_by_department||'').toString().trim().toLowerCase()) === mgrDept)
+          : raw;
+        setClaims(visible);
       } catch(e){ console.error('claims error', e); }
       finally { setClaimsLoading(false); }
     })();
-  }, []);
+  }, [currentUser?.role, currentUser?.department]);
 
   // Fetch returns data
   useEffect(()=>{

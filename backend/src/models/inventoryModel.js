@@ -436,7 +436,7 @@ export async function listClaims(filters = {}) {
   }
   const where = clauses.length ? 'WHERE ' + clauses.join(' AND ') : '';
   const { rows } = await pool.query(
-    `SELECT c.*, u.username AS requested_by_username, i.name AS item_name
+    `SELECT c.*, u.username AS requested_by_username, u.department AS requested_by_department, i.name AS item_name
        FROM inventory_claims c
        LEFT JOIN users u ON u.id = c.requested_by
        LEFT JOIN inventory_items i ON i.id = c.item_id
@@ -488,7 +488,7 @@ export async function listClaimsPaged(filters = {}) {
       LEFT JOIN users u ON u.id = c.requested_by
       LEFT JOIN inventory_items i ON i.id = c.item_id ${where}`;
   const { rows } = await pool.query(
-    `SELECT c.*, u.username AS requested_by_username, i.name AS item_name, i.status AS item_status
+    `SELECT c.*, u.username AS requested_by_username, u.department AS requested_by_department, i.name AS item_name, i.status AS item_status
       ${baseQuery}
       ORDER BY c.id DESC LIMIT ${l} OFFSET ${offset}`, values);
   const { rows: countRows } = await pool.query(`SELECT COUNT(*)::int AS total ${baseQuery}`, values);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
 import { inventoryApi } from '@/services/inventoryApi';
+import { useAuth } from '@/context/useAuth';
 
 // Temporary delete endpoint wrapper (assumes backend support to be added later)
 async function deleteClaim(claimId){
@@ -40,6 +41,7 @@ const statusColors = {
 };
 
 export default function ManagerClaims(){
+  const { user: currentUser } = useAuth();
   const [claims,setClaims] = useState([]);
   const [page,setPage] = useState(1); const [totalPages,setTotalPages] = useState(1); const [total,setTotal]=useState(0);
   const [status,setStatus] = useState('pending');
@@ -58,12 +60,19 @@ export default function ManagerClaims(){
     setLoading(true);
     try {
       const data = await inventoryApi.listPendingClaims({ page, limit: 15, status: status||undefined, itemStatus: itemStatus||undefined });
-      setClaims(data.claims||[]);
+      // Backend additionally returns requested_by_department for each claim (see server model)
+      const raw = data.claims||[];
+      // If current user is a manager, filter client-side as well to ensure UI never shows cross-department claims
+      const normalizedMgrDept = (currentUser?.department || '').toString().trim().toLowerCase();
+      const visible = normalizedMgrDept && currentUser?.role === 'manager'
+        ? raw.filter(c => ((c.requested_by_department||'').toString().trim().toLowerCase()) === normalizedMgrDept)
+        : raw;
+      setClaims(visible);
       setTotalPages(data.totalPages||1);
       setTotal(data.total||0);
     } catch(e){ pushToast(e.message,true); }
     finally { setLoading(false); }
-  },[page,status,itemStatus,pushToast]);
+  },[page,status,itemStatus,pushToast,currentUser]);
   useEffect(()=>{ load(); },[load]);
 
   const decide = async (claim, approve) => {
