@@ -78,6 +78,7 @@ const Panel = styled.div`
   display:flex;
   flex-direction:column;
   gap:.9rem;
+  margin-bottom:1.5rem;
   box-shadow:0 10px 32px -14px rgba(31,41,55,.35), 0 2px 6px -2px rgba(31,41,55,.15);
   backdrop-filter:blur(14px) saturate(180%);
   -webkit-backdrop-filter:blur(14px) saturate(180%);
