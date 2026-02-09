@@ -108,7 +108,7 @@ const AdminDashboardPage = () => {
     color: '#fff',
     padding: '10px 14px',
     borderRadius: '8px',
-    fontSize: '.7rem',
+    fontSize: '1rem',
     fontWeight: 600,
     letterSpacing: '.05em',
     cursor: 'pointer',
@@ -215,7 +215,7 @@ const AdminDashboardPage = () => {
         <section style={{ ...sectionStyle, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin:0 }}>Visual Analytics</h1>
-            <p style={{margin:'6px 0 0', fontSize:'.8rem', color:'#475569'}}>Live aggregated inventory & engagement metrics.</p>
+            <p style={{margin:'6px 0 0', fontSize:'1.2rem', color:'#475569'}}>Live aggregated inventory & engagement metrics.</p>
           </div>
           <img src={sLogo} alt="Logo" style={{ height: "96px" }} />
         </section>
@@ -225,20 +225,20 @@ const AdminDashboardPage = () => {
           <h2 style={{ fontSize:"1.05rem", fontWeight:700, margin:'0 0 12px' }}>Core Distributions</h2>
           <div style={{display:'grid', gap:'36px', gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))'}}>
             <div style={{textAlign:'center'}}>
-              <h3 style={{fontSize:'.7rem', textTransform:'uppercase', letterSpacing:'.08em', color:'#475569', marginBottom:6}}>Inventory Status</h3>
+              <h3 style={{fontSize:'1rem', textTransform:'uppercase', letterSpacing:'.08em', color:'#475569', marginBottom:6}}>Inventory Status</h3>
               <Pie data={pieInventoryStatus} />
             </div>
             <div style={{textAlign:'center'}}>
-              <h3 style={{fontSize:'.7rem', textTransform:'uppercase', letterSpacing:'.08em', color:'#475569', marginBottom:6}}>Availability</h3>
+              <h3 style={{fontSize:'1rem', textTransform:'uppercase', letterSpacing:'.08em', color:'#475569', marginBottom:6}}>Availability</h3>
               <Doughnut data={doughnutAvailability} />
-              <p style={{fontSize:'.55rem', marginTop:6}}>Total: {totals.total_items || 0}</p>
+              <p style={{fontSize:'.8rem', marginTop:6}}>Total: {totals.total_items || 0}</p>
             </div>
             <div style={{textAlign:'center'}}>
-              <h3 style={{fontSize:'.7rem', textTransform:'uppercase', letterSpacing:'.08em', color:'#475569', marginBottom:6}}>User Roles</h3>
+              <h3 style={{fontSize:'1rem', textTransform:'uppercase', letterSpacing:'.08em', color:'#475569', marginBottom:6}}>User Roles</h3>
               <Pie data={pieUserRoles} />
             </div>
             <div style={{textAlign:'center'}}>
-              <h3 style={{fontSize:'.7rem', textTransform:'uppercase', letterSpacing:'.08em', color:'#475569', marginBottom:6}}>Voter Roles</h3>
+              <h3 style={{fontSize:'1rem', textTransform:'uppercase', letterSpacing:'.08em', color:'#475569', marginBottom:6}}>Voter Roles</h3>
               <Doughnut data={doughnutVoterRoles} />
             </div>
           </div>
@@ -280,7 +280,7 @@ const AdminDashboardPage = () => {
           <h2 style={{ fontSize: "1.05rem", fontWeight:700, margin:'0 0 12px' }}>Top Voted Requests</h2>
           <div style={{maxWidth:'840px'}}>
             {votes ? <Bar data={barVotes} options={{ indexAxis:'y', plugins:{ legend:{ display:false }}, scales:{ x:{ beginAtZero:true }}}} /> : <p>Loading...</p>}
-            <p style={{fontSize:'.6rem', marginTop:'.5rem', color:'#475569'}}>Total Votes: {votes?.totalVotes || 0}</p>
+            <p style={{fontSize:'.9rem', marginTop:'.5rem', color:'#475569'}}>Total Votes: {votes?.totalVotes || 0}</p>
           </div>
         </section>
 
@@ -293,7 +293,7 @@ const AdminDashboardPage = () => {
 
         <section style={sectionStyle}>
           <h2 style={{ fontSize: "1.05rem", fontWeight:700, margin:'0 0 10px' }}>Snapshot</h2>
-          <p style={{fontSize:'.6rem',color:'#475569',lineHeight:1.4}}>Charts auto-refresh only on manual refresh. Use the Refresh button to pull latest aggregated values. Voter & claim dynamics highlight engagement pressure areas.</p>
+          <p style={{fontSize:'.9rem',color:'#475569',lineHeight:1.4}}>Charts auto-refresh only on manual refresh. Use the Refresh button to pull latest aggregated values. Voter & claim dynamics highlight engagement pressure areas.</p>
         </section>
       </main>
     </div>

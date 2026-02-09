@@ -59,8 +59,8 @@ const UserAvatar = styled.img`
 `;
 
 const UserInfo = styled.div`
-  h3 { margin:0 0 .15rem; font-size:1rem; font-weight:600; letter-spacing:.5px; }
-  p  { margin:0; font-size:.8rem; opacity:.85; }
+  h3 { margin:0 0 .15rem; font-size:1.2rem; font-weight:600; letter-spacing:.5px; }
+  p  { margin:0; font-size:1rem; opacity:.85; }
 `;
 
 const NavMenu = styled.nav`
@@ -197,12 +197,12 @@ const Sidebar = ({ open=false, onClose }) => {
       <UserSection>
         <UserAvatar src={getAvatarUrl(user)} alt="User avatar" />
         <UserInfo>
-          <h3 style={{margin:0, fontSize:'.7rem', letterSpacing:'.5px', textTransform:'uppercase', fontWeight:700}}>Welcome</h3>
-          <p style={{margin:'.15rem 0 0', fontWeight:600, fontSize:'.8rem', lineHeight:'.95rem'}} title={user?.fullName || user?.name}>{(user?.fullName || user?.name || 'User')}</p>
+          <h3 style={{margin:0, fontSize:'1rem', letterSpacing:'.5px', textTransform:'uppercase', fontWeight:700}}>Welcome</h3>
+          <p style={{margin:'.15rem 0 0', fontWeight:600, fontSize:'1rem', lineHeight:'.95rem'}} title={user?.fullName || user?.name}>{(user?.fullName || user?.name || 'User')}</p>
           <div style={{display:'flex', flexWrap:'wrap', gap:'.35rem', marginTop:'.4rem'}}>
-            {user?.role && <span style={{background:'#6366f1', color:'#fff', fontSize:'.5rem', padding:'.25rem .5rem', borderRadius:'999px', fontWeight:600, letterSpacing:'.5px'}}>{user.role}</span>}
+            {user?.role && <span style={{background:'#6366f1', color:'#fff', fontSize:'.8rem', padding:'.25rem .5rem', borderRadius:'999px', fontWeight:600, letterSpacing:'.5px'}}>{user.role}</span>}
             {(user?.department || user?.course) && (
-              <span style={{background:'#f1f5f9', color:'#334155', fontSize:'.5rem', padding:'.25rem .55rem', borderRadius:'999px', fontWeight:600, letterSpacing:'.5px'}}>
+              <span style={{background:'#f1f5f9', color:'#334155', fontSize:'.8rem', padding:'.25rem .55rem', borderRadius:'999px', fontWeight:600, letterSpacing:'.5px'}}>
                 {(user?.department||'').toString()} {user?.course? '· '+user.course : ''}
               </span>
             )}

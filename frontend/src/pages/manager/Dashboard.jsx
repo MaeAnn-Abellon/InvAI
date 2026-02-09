@@ -288,11 +288,11 @@ export default function Dashboard() {
           <ModernPanel title="📊 Analytics Overview" gridColumn="span 12">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem', height: '300px' }}>
               <div>
-                <h4 style={{ fontSize: '.8rem', margin: '0 0 1rem', color: '#475569', fontWeight: 600 }}>Item Status Distribution</h4>
+                <h4 style={{ fontSize: '1.2rem', margin: '0 0 1rem', color: '#475569', fontWeight: 600 }}>Item Status Distribution</h4>
                 <PieChart data={aggregateForPie(analytics.items)} colors={['#4f46e5','#06b6d4','#10b981','#f59e0b','#ef4444','#64748b']} size={200} />
               </div>
               <div>
-                <h4 style={{ fontSize: '.8rem', margin: '0 0 1rem', color: '#475569', fontWeight: 600 }}>Claim Processing</h4>
+                <h4 style={{ fontSize: '1.2rem', margin: '0 0 1rem', color: '#475569', fontWeight: 600 }}>Claim Processing</h4>
                 <BarChart data={aggregateKeyCounts(analytics.claims,'status')} colors={{ pending:'#f59e0b', approved:'#10b981', rejected:'#ef4444' }} maxWidth={200} />
               </div>
             </div>
@@ -355,7 +355,7 @@ function SectionHeader({ title, subtitle }) {
     <div style={{ marginBottom: '1rem' }}>
       <h2 style={{ 
         margin: 0, 
-        fontSize: '1.5rem', 
+        fontSize: '1.8rem', 
         fontWeight: 700,
         color: '#1e293b',
         marginBottom: '.25rem'
@@ -366,7 +366,7 @@ function SectionHeader({ title, subtitle }) {
         <p style={{ 
           margin: 0, 
           color: '#64748b', 
-          fontSize: '.9rem' 
+          fontSize: '1.1rem' 
         }}>
           {subtitle}
         </p>
@@ -385,7 +385,7 @@ function ModernButton({ children, onClick, color = "#4f46e5" }) {
         border: 'none',
         padding: '.75rem 1.25rem',
         borderRadius: '12px',
-        fontSize: '.85rem',
+        fontSize: '1.05rem',
         fontWeight: 600,
         cursor: 'pointer',
         boxShadow: `0 4px 15px ${color}40`,
@@ -460,7 +460,7 @@ function ModernCard({ label, value, color, icon, trend, breakdown }) {
           </div>
           {trend && (
             <span style={{
-              fontSize: '.75rem',
+              fontSize: '1.1rem',
               fontWeight: 600,
               color: trend.startsWith('+') ? '#10b981' : '#ef4444',
               background: trend.startsWith('+') ? '#10b98120' : '#ef444420',
@@ -473,7 +473,7 @@ function ModernCard({ label, value, color, icon, trend, breakdown }) {
         </div>
         
         <div style={{
-          fontSize: '.8rem',
+          fontSize: '1.2rem',
           fontWeight: 600,
           color: '#64748b',
           textTransform: 'uppercase',
@@ -584,7 +584,7 @@ function ModernPanel({ title, children, gridColumn }) {
 const emptyStyle = { fontSize:'.6rem', opacity:.6, padding:'.4rem .3rem' };
 
 // Shared badge
-function Badge({ children, bg='#e2e8f0', color='#334155' }) { return <span style={{ background:bg, color, padding:'.25rem .55rem', fontSize:'.5rem', fontWeight:600, borderRadius:999, letterSpacing:.5 }}>{children}</span>; }
+function Badge({ children, bg='#e2e8f0', color='#334155' }) { return <span style={{ background:bg, color, padding:'.25rem .55rem', fontSize:'.8rem', fontWeight:600, borderRadius:999, letterSpacing:.5 }}>{children}</span>; }
 
 function ItemStatusList({ items }) {
   if (!items || !items.length) return <div style={emptyStyle}>No item data.</div>;
@@ -605,7 +605,7 @@ function ItemStatusList({ items }) {
           }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
               <strong style={{ fontSize:'.62rem', textTransform:'uppercase', letterSpacing:.6 }}>{cat}</strong>
-              <span style={{ fontSize:'.5rem', fontWeight:600, background:'#f1f5f9', padding:'.2rem .45rem', borderRadius:20 }}>Total {total}</span>
+              <span style={{ fontSize:'.8rem', fontWeight:600, background:'#f1f5f9', padding:'.2rem .45rem', borderRadius:20 }}>Total {total}</span>
             </div>
             <ul style={{ listStyle:'none', margin:0, padding:0, display:'flex', flexDirection:'column', gap:'.4rem' }}>
               {statuses.map(s => {
@@ -638,7 +638,7 @@ function ClaimStatusList({ claims }) {
   return (
     <ul style={{ listStyle:'none', margin:0, padding:0, display:'flex', flexDirection:'column', gap:'.4rem' }}>
       {ordered.filter(o=>map[o]!==undefined).map(st => (
-        <li key={st} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', background:'#f8fafc', padding:'.45rem .55rem', borderRadius:10, fontSize:'.55rem', fontWeight:600 }}>
+        <li key={st} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', background:'#f8fafc', padding:'.45rem .55rem', borderRadius:10, fontSize:'.85rem', fontWeight:600 }}>
           <span style={{ textTransform:'uppercase', letterSpacing:.5 }}>{st}</span>
           <span>
             <AnimatedBar width={Math.min(100, map[st]*12)} color={st==='pending'?'#f59e0b':st==='approved'?'#16a34a':'#dc2626'} />
@@ -658,7 +658,7 @@ function ReturnStatus({ returnsData }) {
         <Badge bg="#ffedd5" color="#9a3412">pending {pending}</Badge>
         <Badge bg="#f1f5f9" color="#334155">in-use {returnsData?.total_in_use || 0}</Badge>
       </div>
-      <small style={{ fontSize:'.5rem', opacity:.65 }}>Breakdown includes in-use equipment with/without pending return requests.</small>
+      <small style={{ fontSize:'.8rem', opacity:.65 }}>Breakdown includes in-use equipment with/without pending return requests.</small>
     </div>
   );
 }
@@ -764,7 +764,7 @@ function PieChart({ data=[], colors=[], size=180 }) {
           {/* Donut cut-out */}
           <circle cx={cx} cy={cy} r={radius*0.52} fill="#fff" />
         </svg>
-        <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', pointerEvents:'none', fontSize:'.55rem', fontWeight:600, lineHeight:1.1 }}>
+        <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', pointerEvents:'none', fontSize:'.85rem', fontWeight:600, lineHeight:1.1 }}>
           {hovered==null && <>
             <span style={{ opacity:.7 }}>TOTAL</span>
             <span style={{ fontSize:'.9rem' }}>{total}</span>
@@ -774,9 +774,9 @@ function PieChart({ data=[], colors=[], size=180 }) {
             const pct = ((h.value/total)*100).toFixed(1);
             return (
               <div style={{ textAlign:'center', padding:'0 .3rem' }}>
-                <div style={{ fontSize:'.55rem', fontWeight:700 }}>{h.label}</div>
+                <div style={{ fontSize:'.85rem', fontWeight:700 }}>{h.label}</div>
                 <div style={{ fontSize:'.8rem', fontWeight:700 }}>{h.value}</div>
-                <div style={{ fontSize:'.55rem', opacity:.65 }}>{pct}%</div>
+                <div style={{ fontSize:'.85rem', opacity:.65 }}>{pct}%</div>
               </div>
             );
           })()}
@@ -793,7 +793,7 @@ function PieChart({ data=[], colors=[], size=180 }) {
                 borderRadius:10,
                 padding:'.4rem .45rem',
                 display:'flex', flexDirection:'column', gap:'.15rem',
-                textAlign:'left', cursor:'pointer', fontSize:'.5rem', fontWeight:600,
+                textAlign:'left', cursor:'pointer', fontSize:'.8rem', fontWeight:600,
                 transition:'background .25s, border-color .25s'
               }}>
               <span style={{ display:'flex', alignItems:'center', gap:4 }}>
@@ -822,7 +822,7 @@ function BarChart({ data={}, colors={}, maxWidth=180 }) {
       {entries.map(([k,v])=>{
         const w = (v/max)*maxWidth;
         return (
-          <li key={k} style={{ fontSize:'.55rem', fontWeight:600 }}>
+          <li key={k} style={{ fontSize:'.85rem', fontWeight:600 }}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:2 }}>
               <span style={{ textTransform:'uppercase', letterSpacing:.5 }}>{k}</span>
               <span>{v}</span>
@@ -922,7 +922,7 @@ function InventoryItemsList({ items, loading }) {
                     )}
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:'.4rem' }}>
-                    <span style={{ fontSize:'.5rem', fontWeight:600, color:'#475569' }}>Qty: {item.quantity || 0}</span>
+                    <span style={{ fontSize:'.8rem', fontWeight:600, color:'#475569' }}>Qty: {item.quantity || 0}</span>
                     <StatusBadge status={item.status} category={item.category} />
                   </div>
                 </div>
@@ -998,7 +998,7 @@ function RequestAnalytics({ requests, loading }) {
     <div style={{ display:'flex', flexDirection:'column', gap:'.8rem' }}>
       {/* Status Distribution */}
       <div>
-        <h4 style={{ fontSize:'.6rem', margin:'0 0 .5rem', color:'#64748b', textTransform:'uppercase', letterSpacing:.5 }}>Status Distribution</h4>
+        <h4 style={{ fontSize:'.9rem', margin:'0 0 .5rem', color:'#64748b', textTransform:'uppercase', letterSpacing:.5 }}>Status Distribution</h4>
         <BarChart 
           data={statusCounts} 
           colors={{ pending:'#f59e0b', approved:'#16a34a', rejected:'#dc2626', voting:'#8b5cf6' }} 
@@ -1009,7 +1009,7 @@ function RequestAnalytics({ requests, loading }) {
       {/* Priority Breakdown */}
       {Object.keys(priorityCounts).length > 1 && (
         <div>
-          <h4 style={{ fontSize:'.6rem', margin:'0 0 .5rem', color:'#64748b', textTransform:'uppercase', letterSpacing:.5 }}>Priority Levels</h4>
+          <h4 style={{ fontSize:'.9rem', margin:'0 0 .5rem', color:'#64748b', textTransform:'uppercase', letterSpacing:.5 }}>Priority Levels</h4>
           <div style={{ display:'flex', gap:'.4rem', flexWrap:'wrap' }}>
             {Object.entries(priorityCounts).map(([priority, count]) => (
               <Badge 
@@ -1026,7 +1026,7 @@ function RequestAnalytics({ requests, loading }) {
 
       {/* Recent Requests */}
       <div>
-        <h4 style={{ fontSize:'.6rem', margin:'0 0 .5rem', color:'#64748b', textTransform:'uppercase', letterSpacing:.5 }}>Recent Requests</h4>
+        <h4 style={{ fontSize:'.9rem', margin:'0 0 .5rem', color:'#64748b', textTransform:'uppercase', letterSpacing:.5 }}>Recent Requests</h4>
         <div style={{ display:'flex', flexDirection:'column', gap:'.3rem', maxHeight:'120px', overflowY:'auto' }}>
           {recentRequests.map(req => (
             <div key={req.id} style={{
@@ -1078,11 +1078,11 @@ function EquipmentUtilization({ analytics, items }) {
       {/* Key Metrics */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'.5rem' }}>
         <div style={{ textAlign:'center', padding:'.5rem', background:'#f8fafc', borderRadius:10 }}>
-          <div style={{ fontSize:'.5rem', color:'#64748b', marginBottom:'.2rem' }}>Utilization Rate</div>
+          <div style={{ fontSize:'.8rem', color:'#64748b', marginBottom:'.2rem' }}>Utilization Rate</div>
           <div style={{ fontSize:'1.2rem', fontWeight:700, color:'#8b5cf6' }}>{utilizationRate}%</div>
         </div>
         <div style={{ textAlign:'center', padding:'.5rem', background:'#f8fafc', borderRadius:10 }}>
-          <div style={{ fontSize:'.5rem', color:'#64748b', marginBottom:'.2rem' }}>Availability Rate</div>
+          <div style={{ fontSize:'.8rem', color:'#64748b', marginBottom:'.2rem' }}>Availability Rate</div>
           <div style={{ fontSize:'1.2rem', fontWeight:700, color:'#16a34a' }}>{availabilityRate}%</div>
         </div>
       </div>

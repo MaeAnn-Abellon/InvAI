@@ -25,7 +25,7 @@ const StatusDonut = styled.div`
     position:absolute;
     width:60%;
     text-align:center;
-    font-size:.6rem;
+    font-size:.9rem;
     font-weight:600;
     color:#1e293b;
     line-height:.85rem;
@@ -39,7 +39,7 @@ const Legend = styled.ul`
   display:flex;
   flex-direction:column;
   gap:.4rem;
-  font-size:.6rem;
+  font-size:.9rem;
   li { display:flex; align-items:center; gap:.45rem; }
   i { width:12px; height:12px; border-radius:4px; display:inline-block; }
 `;
@@ -60,7 +60,7 @@ const CategorySection = styled.div`
 `;
 
 const CategoryTitle = styled.h3`
-  font-size: 0.9rem;
+  font-size: 1.3rem;
   font-weight: 600;
   margin: 0;
   color: #1e293b;
@@ -68,7 +68,7 @@ const CategoryTitle = styled.h3`
 `;
 
 const SubNote = styled.small`
-  font-size:.6rem;
+  font-size:.9rem;
   color:#64748b;
   letter-spacing:.5px;
   text-align: center;
