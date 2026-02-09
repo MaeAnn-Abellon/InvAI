@@ -150,8 +150,8 @@ export default function Dashboard() {
 
   return (
     <div className="manager-dashboard" style={{ 
-      padding: '2rem', 
-      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+      padding: '0', 
+      background: 'transparent',
       minHeight: '100vh'
     }}>
       {/* Header Section */}
@@ -209,7 +209,7 @@ export default function Dashboard() {
       </div>
 
       {/* AI Forecast Alerts Section */}
-      <div style={{ marginBottom: '2rem' }}>
+      <div style={{ marginBottom: '2.5rem' }}>
         <DepletionAlerts
           loading={forecastLoading}
           error={forecastError}
@@ -219,7 +219,7 @@ export default function Dashboard() {
       </div>
 
       {/* Key Metrics Grid */}
-      <div style={{ marginBottom: '2rem' }}>
+      <div style={{ marginBottom: '2.5rem' }}>
         <SectionHeader title="Key Performance Metrics" subtitle="Real-time overview of your inventory system" />
         <div style={{ 
           display: 'grid', 

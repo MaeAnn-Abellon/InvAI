@@ -48,10 +48,10 @@ const titleStyle = {
 
 const sectionStyle = {
   backgroundColor: '#ffffff',
-  padding: '20px',
+  padding: '24px',
   borderRadius: '10px',
   boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-  marginBottom: '28px'
+  marginBottom: '32px'
 };
 
 // Dashboard is now chart-only (visual analytics only as requested).
@@ -199,7 +199,7 @@ const AdminDashboardPage = () => {
       </header>
 
       {/* Main Content */}
-      <main style={{ padding: "24px" }}>
+      <main style={{ padding: "0" }}>
         {/* Quick Actions */}
         <section style={{ ...sectionStyle, marginTop: 0 }}>
           <h2 style={{ fontSize: '1.05rem', fontWeight: 700, margin: '0 0 6px' }}>Quick Actions</h2>
@@ -223,7 +223,7 @@ const AdminDashboardPage = () => {
         {/* Core Distribution Charts */}
         <section style={{ ...sectionStyle }}>
           <h2 style={{ fontSize:"1.05rem", fontWeight:700, margin:'0 0 12px' }}>Core Distributions</h2>
-          <div style={{display:'grid', gap:'28px', gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))'}}>
+          <div style={{display:'grid', gap:'36px', gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))'}}>
             <div style={{textAlign:'center'}}>
               <h3 style={{fontSize:'.7rem', textTransform:'uppercase', letterSpacing:'.08em', color:'#475569', marginBottom:6}}>Inventory Status</h3>
               <Pie data={pieInventoryStatus} />

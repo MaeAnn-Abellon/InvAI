@@ -8,8 +8,8 @@ const Shell = styled.div`
 `;
 
 const Main = styled.main`
-  margin-left:240px; min-height:100vh; padding:2rem 2.25rem 3rem; overflow-x:hidden; transition:filter .4s;
-  @media (max-width:860px){ margin-left:0; padding:4.2rem 1.25rem 3.5rem; }
+  margin-left:240px; min-height:100vh; padding:2.5rem 2.5rem 4rem; overflow-x:hidden; transition:filter .4s;
+  @media (max-width:860px){ margin-left:0; padding:4.2rem 1.5rem 4rem; }
 `;
 
 const MobileBar = styled.button`

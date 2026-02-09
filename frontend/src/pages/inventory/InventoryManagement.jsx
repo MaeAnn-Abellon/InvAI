@@ -4,15 +4,15 @@ import { Bell, Settings as SettingsIcon, MessageCircle } from 'lucide-react';
 import SettingsModal from '@/components/settings/SettingsModal';
 
 const PageContainer = styled.div`
-  padding: 2rem;
-  background-color: #f8fafc;
+  padding: 0;
+  background-color: transparent;
 `;
 
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 `;
 
 const IconButton = styled.button`
@@ -51,7 +51,7 @@ const SearchBar = styled.input`
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   font-size: 1rem;
 
   &::placeholder {
@@ -62,7 +62,7 @@ const SearchBar = styled.input`
 const TabList = styled.div`
   display: flex;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   border-bottom: 1px solid #e2e8f0;
 `;
 
